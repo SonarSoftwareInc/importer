@@ -1,0 +1,31 @@
+{
+  "name": "sonarsoftware/importer",
+  "type": "library",
+  "description": "An importer for Sonar, utilizing the Sonar API.",
+  "keywords": ["sonar","sonar software","sonar api","sonar software api","sonar importer"],
+  "homepage": "https://sonar.software",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Simon Westlake",
+      "email": "simon@sonar.software",
+      "homepage": "https://sonar.software"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "guzzlehttp/guzzle": "~5.0",
+    "vlucas/phpdotenv": "^2.2"
+  },
+  "autoload": {
+    "psr-4" : {
+      "SonarSoftware\\Importer\\" : "src"
+    }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/SonarSoftware/importer"
+    }
+  ]
+}
