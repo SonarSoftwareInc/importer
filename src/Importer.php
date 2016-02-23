@@ -2,6 +2,7 @@
 
 namespace SonarSoftware\Importer;
 
+use Exception;
 use InvalidArgumentException;
 
 class Importer
@@ -40,7 +41,7 @@ class Importer
     public function importAccounts($pathToImportFile)
     {
         $this->validateCredentials();
-        $this->validateVersion("0.3.0");
+        $this->validateVersion("0.3.2");
 
         $accountImporter = new AccountImporter();
         return $accountImporter->import($pathToImportFile);
@@ -68,7 +69,7 @@ class Importer
 
         if ($this->equalToOrNewerThanVersion($responseData->data->version,$requiredVersion) !== true)
         {
-            throw new InvalidArgumentException("Invalid version, this importer requires version $requiredVersion or higher.");
+            throw new InvalidArgumentException("Invalid Sonar version, this importer requires version $requiredVersion or higher.");
         }
 
         return true;
@@ -80,16 +81,22 @@ class Importer
      */
     private function validateCredentials()
     {
-        $response = $this->client->get($this->uri . "/api/v1/_data/version", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-        ]);
+        try {
+            $this->client->get($this->uri . "/api/v1/_data/version", [
+                'headers' => [
+                    'Content-Type' => 'application/json; charset=UTF8',
+                    'timeout' => 30,
+                ],
+                'auth' => [
+                    $this->username,
+                    $this->password,
+                ],
+            ]);
+        }
+        catch (Exception $e)
+        {
+            throw new InvalidArgumentException("Your credentials appear to be invalid or the Sonar server is inaccessible. Specific error is '{$e->getMessage()}'");
+        }
 
         return true;
     }
