@@ -9,30 +9,7 @@ class Importer
     private $uri;
     private $username;
     private $password;
-
-    private $accountColumns = [
-        0 => 'ID',
-        1 => 'Name',
-        2 => 'Account Type ID',
-        3 => 'Account Status ID',
-        4 => 'Account Groups',
-        5 => 'Sub Accounts',
-        6 => 'Next Bill Date',
-        7 => 'Physical Address Line 1',
-        8 => 'Physical Address Line 2',
-        9 => 'Physical City',
-        10 => 'Physical State',
-        11 => 'Physical County',
-        12 => 'Physical ZIP',
-        13 => 'Physical Country',
-        14 => 'Physical Latitude',
-        15 => 'Physical Longitude',
-        16 => 'Primary Contact Name',
-        17 => 'Primary Contact Role',
-        18 => 'Primary Contact Email Address',
-        19 => 'Primary Contact Phone Numbers',
-        20 => 'Primary Contact Email Message Categories',
-    ];
+    private $client;
 
     /**
      * Importer constructor.
@@ -52,10 +29,12 @@ class Importer
         $this->uri = getenv("URI");
         $this->username = getenv("USERNAME");
         $this->password = getenv("PASSWORD");
+
+        $this->client = new GuzzleHttp\Client();
     }
 
     /**
-     * @param $pathToImportFile - Input the full path to the accounts CSV file.
+     * @param $pathToImportFile - Input the full path to the accounts CSV file, which should be generated based on the template in 'templates'.
      * @return array
      */
     public function importAccounts($pathToImportFile)
@@ -63,52 +42,107 @@ class Importer
         $this->validateCredentials();
         $this->validateVersion("0.3.0");
 
-        if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
-        {
-            $client = new GuzzleHttp\Client();
-
-            $failureLogName = tempnam(__DIR__,"account_import_failures");
-            $failureLog = fopen($failureLogName,"w");
-
-            $successLogName = tempnam(__DIR__,"account_import_successes");
-            $successLog = fopen($successLogName,"w");
-
-            $returnData = [
-                'successes' => 0,
-                'failures' => 0,
-                'failure_log_name' => $failureLogName,
-                'success_log_name' => $successLogName,
-            ];
-
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $payload = [
-                    'name' => '',
-                ];
-            }
-        }
-        else
-        {
-            throw new InvalidArgumentException("File could not be opened.");
-        }
-
-        return $returnData;
+        $accountImporter = new AccountImporter();
+        return $accountImporter->import($pathToImportFile);
     }
 
     /**
-     * Validate that the version of the remote Sonar instance is equal to or higher than what we need.
+     * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
+     * @return bool
      */
     private function validateVersion($requiredVersion)
     {
-        throw new InvalidArgumentException("Invalid version, this importer requires version $requiredVersion or higher.");
+        $response = $this->client->get($this->uri . "/api/v1/_data/version", [
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ],
+        ]);
+
+        $responseData = json_decode($response->getBody());
+
+        if ($this->equalToOrNewerThanVersion($responseData->data->version,$requiredVersion) !== true)
+        {
+            throw new InvalidArgumentException("Invalid version, this importer requires version $requiredVersion or higher.");
+        }
+
+        return true;
     }
 
     /**
-     * Validate the entered credentials.
+     * Validate the credentials. This will throw an exception on failure.
+     * @return bool
      */
     private function validateCredentials()
     {
-        throw new InvalidArgumentException("Invalid credentials.");
+        $response = $this->client->get($this->uri . "/api/v1/_data/version", [
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ],
+        ]);
+
+        return true;
+    }
+
+    /**
+     * @param $currentVersion - Version of the Sonar system
+     * @param $versionToCheck - Version that is required
+     * @return bool
+     */
+    private function equalToOrNewerThanVersion($currentVersion, $versionToCheck)
+    {
+        $currentVersionArray = explode(".",$currentVersion);
+        $versionToCheckArray = explode(".",$versionToCheck);
+
+        //1.0.0 is older than 2.0.0
+        if ($versionToCheckArray[0] < $currentVersionArray[0])
+        {
+            return false;
+        }
+
+        if ($versionToCheckArray[0] > $currentVersionArray[0])
+        {
+            return true;
+        }
+
+        //Same major version
+        if ($versionToCheckArray[0] == $currentVersionArray[0])
+        {
+            if ($versionToCheckArray[1] < $currentVersionArray[1])
+            {
+                return false;
+            }
+
+            if ($versionToCheckArray[1] > $currentVersionArray[1])
+            {
+                return true;
+            }
+
+            if ($versionToCheckArray[1] == $currentVersionArray[1])
+            {
+                if ($versionToCheckArray[2] < $currentVersionArray[2])
+                {
+                    return false;
+                }
+
+                if ($versionToCheckArray[2] >= $currentVersionArray[2])
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
 }
