@@ -17,7 +17,7 @@ class Importer
      */
     public function __construct()
     {
-        $dotenv = new Dotenv\Dotenv(__DIR__);
+        $dotenv = new \Dotenv\Dotenv(__DIR__);
         $dotenv->load();
         $dotenv->required(
             [
@@ -31,7 +31,7 @@ class Importer
         $this->username = getenv("USERNAME");
         $this->password = getenv("PASSWORD");
 
-        $this->client = new GuzzleHttp\Client();
+        $this->client = new \GuzzleHttp\Client();
     }
 
     /**
