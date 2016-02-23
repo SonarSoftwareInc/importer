@@ -4,6 +4,7 @@ namespace SonarSoftware\Importer;
 
 use Exception;
 use InvalidArgumentException;
+use GuzzleHttp\Exception\ClientException;
 
 class AccountImporter
 {
@@ -64,7 +65,6 @@ class AccountImporter
                 'successes' => 0,
                 'failures' => 0,
                 'failure_log_name' => $failureLogName,
-                'success_log_name' => $successLogName,
             ];
 
             $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
@@ -85,6 +85,23 @@ class AccountImporter
                 $row = 1;
                 try {
                     $payload = $this->buildPayload($data);
+                    $this->client->post($this->uri . "/api/v1/accounts", [
+                        'headers' => [
+                            'Content-Type' => 'application/json; charset=UTF8',
+                            'timeout' => 30,
+                        ],
+                        'auth' => [
+                            $this->username,
+                            $this->password,
+                        ],
+                        'json' => $payload,
+                    ]);
+                }
+                catch (ClientException $e)
+                {
+                    $response = $e->getResponse();
+                    $body = json_decode($response->getBody());
+                    fwrite($failureLog,"Row $row failed: {$body->data}");
                 }
                 catch (Exception $e)
                 {
@@ -92,6 +109,7 @@ class AccountImporter
                     continue;
                 }
 
+                fwrite($successLog,"Row $row succeeded for account ID {$payload['id']}");
             }
         }
         else
