@@ -65,6 +65,7 @@ class AccountImporter
                 'successes' => 0,
                 'failures' => 0,
                 'failure_log_name' => $failureLogName,
+                'success_log_name' => $successLogName,
             ];
 
             $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
@@ -116,6 +117,9 @@ class AccountImporter
         {
             throw new InvalidArgumentException("File could not be opened.");
         }
+
+        fclose($failureLog);
+        fclose($successLog);
 
         return $returnData;
     }
