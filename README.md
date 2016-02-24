@@ -8,7 +8,7 @@ The recommended installation method is using [Composer](https://getcomposer.org 
 However, we strongly recommend using Composer to simplify auto-loading.
 
 ##Setup
-To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance, and the username and password for a user account
+To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
 that has the appropriate permissions for the API.
 
 ##Templates
