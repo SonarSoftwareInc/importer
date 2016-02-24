@@ -68,22 +68,11 @@ class AccountImporter
                 'success_log_name' => $successLogName,
             ];
 
-            $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
-                'headers' => [
-                    'Content-Type' => 'application/json; charset=UTF8',
-                    'timeout' => 30,
-                ],
-                'auth' => [
-                    $this->username,
-                    $this->password,
-                ],
-            ]);
-
-            $this->countries = json_decode($response->getBody())->data;
+            $this->loadCountryData();
 
             $row = 0;
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $row = 1;
+                $row++;
                 try {
                     $payload = $this->buildPayload($data);
                     $this->client->post($this->uri . "/api/v1/accounts", [
@@ -103,13 +92,17 @@ class AccountImporter
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     fwrite($failureLog,"Row $row failed: {$body->data}");
+                    $returnData['failures'] += 1;
+                    continue;
                 }
                 catch (Exception $e)
                 {
                     fwrite($failureLog,"Row $row failed: {$e->getMessage()}");
+                    $returnData['failures'] += 1;
                     continue;
                 }
 
+                $returnData['successes'] += 1;
                 fwrite($successLog,"Row $row succeeded for account ID {$payload['id']}");
             }
         }
@@ -338,5 +331,21 @@ class AccountImporter
         }
 
         return $payload;
+    }
+
+    private function loadCountryData()
+    {
+        $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ],
+        ]);
+
+        $this->countries = json_decode($response->getBody())->data;
     }
 }
