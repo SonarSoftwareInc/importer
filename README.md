@@ -27,6 +27,9 @@ formatting tab have notes with more in-depth descriptions.
 To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
 that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
 
+### CSV Formatting
+Your CSV files should be comma separated. Each column must be included, even if it is optional. An optional column can just have no data entered. Strings should be wrapped in double quotes (") and double quotes inside strings should be escaped with a backslash (\).
+
 ###How to use
 To use the importer, instantiate the Importer class.
 
