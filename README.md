@@ -7,6 +7,8 @@ If you do not have a background in software development, you are not expected to
 The recommended installation method is using [Composer](https://getcomposer.org "Composer"). You can install by running `composer require sonarsoftware/importer`. Alternatively, you can download the code directly from Github and include the necessary classes into your scripts.
 However, we strongly recommend using Composer to simplify auto-loading.
 
+This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on Windows or OS X.
+
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
 formatting tab have notes with more in-depth descriptions.
@@ -125,3 +127,10 @@ Before using this function, **please ensure you have configured your eCheck or A
 If you currently store untokenized bank account data, you should use this function to import it. Once the data is entered into Sonar, it will be tokenized if it is to be processed via eCheck. If using ACH, the data will be AES-256 encrypted.
 
 `$results = $importer->importUntokenizedBankAccounts("/home/simon/untokenizedBankAccounts.csv");`
+
+### Importing account files
+To import account files, call the function **importAccountFiles** on the Importer class, passing in the path to a properly formatted CSV file with account file relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account files template in the templates folder.
+
+This function is used to upload files relevant to your accounts to the account file tab.
+
+`$results = $importer->importAccountFiles("/home/simon/accountFiles.csv");`
