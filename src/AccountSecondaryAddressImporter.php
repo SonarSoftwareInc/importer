@@ -6,12 +6,14 @@ use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 
-class ContactImporter
+class AccountSecondaryAddressImporter
 {
     private $uri;
     private $username;
     private $password;
     private $client;
+
+    private $addressFormatter;
 
     /**
      * Importer constructor.
@@ -33,6 +35,8 @@ class ContactImporter
         $this->password = getenv("PASSWORD");
 
         $this->client = new \GuzzleHttp\Client();
+
+        $this->addressFormatter = new AddressFormatter();
     }
 
     /**
@@ -50,10 +54,10 @@ class ContactImporter
                 mkdir(__DIR__ . "/../log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output","contact_import_failures");
+            $failureLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output","contact_import_successes");
+            $successLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
@@ -67,7 +71,7 @@ class ContactImporter
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $row++;
                 try {
-                    $this->createContact($data);
+                    $this->createSecondaryAddress($data);
                 }
                 catch (ClientException $e)
                 {
@@ -106,7 +110,7 @@ class ContactImporter
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1 ];
+        $requiredColumns = [ 0,1,2,4,5,7,8 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -115,7 +119,7 @@ class ContactImporter
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the contact import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                        throw new InvalidArgumentException("In the account import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
                 }
             }
@@ -134,80 +138,35 @@ class ContactImporter
      */
     private function buildPayload($data)
     {
-        $payload = [
-            'id' => (int)trim($data[0]),
-            'name' => (string)trim($data[1]),
+        $unformattedAddress = [
+            'line1' => trim($data[2]),
+            'line2' => trim($data[3]),
+            'city' => trim($data[4]),
+            'state' => trim($data[5]),
+            'county' => trim($data[6]),
+            'zip' => trim($data[7]),
+            'country' => trim($data[8]),
+            'latitude' => trim($data[9]),
+            'longitude' => trim($data[10]),
         ];
 
-        if (trim($data[2]))
-        {
-            $payload['role'] = trim($data[2]);
-        }
+        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
 
-        if (trim($data[3]))
-        {
-            $payload['email_address'] = trim($data[3]);
-        }
+        $formattedAddress['address_type_id'] = (int)trim($data[1]);
 
-        $phoneNumbers = [];
-        if (trim($data[4]))
-        {
-            $phoneNumbers['work'] = [
-                'number' => trim($data[4]),
-                'extension' => trim($data[5]),
-            ];
-        }
-        if (trim($data[6]))
-        {
-            $phoneNumbers['home'] = [
-                'number' => trim($data[6]),
-                'extension' => null,
-            ];
-        }
-        if (trim($data[7]))
-        {
-            $phoneNumbers['mobile'] = [
-                'number' => trim($data[7]),
-                'extension' => null,
-            ];
-        }
-        if (trim($data[8]))
-        {
-            $phoneNumbers['fax'] = [
-                'number' => trim($data[8]),
-                'extension' => null,
-            ];
-        }
-
-        if (trim($data[9]))
-        {
-            $payload['email_message_categories'] = explode(",",trim($data[9]));
-        }
-        else
-        {
-            $payload['email_message_categories'] = [];
-        }
-
-        if (count($phoneNumbers) > 0)
-        {
-            $payload['phone_numbers'] = $phoneNumbers;
-        }
-
-        $payload['primary'] = false;
-
-        return $payload;
+        return $formattedAddress;
     }
 
     /**
      * @param $data
      * @return mixed
      */
-    private function createContact($data)
+    private function createSecondaryAddress($data)
     {
         $payload = $this->buildPayload($data);
         $accountID = (int)trim($data[0]);
 
-        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/contacts", [
+        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/addresses", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -219,5 +178,4 @@ class ContactImporter
             'json' => $payload,
         ]);
     }
-
 }

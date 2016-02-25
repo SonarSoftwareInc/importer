@@ -13,12 +13,7 @@ class AccountImporter
     private $password;
     private $client;
 
-    /**
-     * Data stored to limit necessary queries
-     */
-    private $countries;
-    private $subDivisions = [];
-    private $counties = [];
+    private $addressFormatter;
 
     /**
      * Importer constructor.
@@ -40,6 +35,8 @@ class AccountImporter
         $this->password = getenv("PASSWORD");
 
         $this->client = new \GuzzleHttp\Client();
+
+        $this->addressFormatter = new AddressFormatter();
     }
 
     /**
@@ -54,7 +51,6 @@ class AccountImporter
         {
             $this->validateImportFile($pathToImportFile);
             $this->validateServices($debitAdjustmentID, $creditAdjustmentID);
-            $this->loadCountryData();
 
             if (!file_exists(__DIR__ . "/../log_output"))
             {
@@ -158,111 +154,7 @@ class AccountImporter
         return;
     }
 
-    /**
-     * Return a formatted address for use in the API import. Throws an exception if something is invalid in the address.
-     * @param $data
-     * @return array
-     */
-    private function returnFormattedAddress($data)
-    {
-        $unformattedAddress = [
-            'line1' => trim($data[7]),
-            'line2' => trim($data[8]),
-            'city' => trim($data[9]),
-            'state' => trim($data[10]),
-            'county' => trim($data[11]),
-            'zip' => trim($data[12]),
-            'country' => trim($data[13]),
-            'latitude' => trim($data[14]),
-            'longitude' => trim($data[15]),
-        ];
 
-        if (!array_key_exists($unformattedAddress['country'],$this->countries))
-        {
-            throw new InvalidArgumentException($unformattedAddress['country'] . " is not a valid country.");
-        }
-
-        try {
-            $validatedAddressResponse = $this->client->post($this->uri . "/api/v1/_data/validate_address", [
-                'headers' => [
-                    'Content-Type' => 'application/json; charset=UTF8',
-                    'timeout' => 30,
-                ],
-                'auth' => [
-                    $this->username,
-                    $this->password,
-                ],
-                'json' => $unformattedAddress,
-            ]);
-
-            $address = (array)json_decode($validatedAddressResponse->getBody())->data;
-            if ($unformattedAddress['latitude'] && $unformattedAddress['longitude'])
-            {
-                $address['latitude'] = $unformattedAddress['latitude'];
-                $address['longitude'] = $unformattedAddress['longitude'];
-            }
-            return $address;
-        }
-        catch (Exception $e)
-        {
-            /**
-             * The address failed to validate, but we will still attempt to validate individual parts of it to see if it can be used.
-             */
-            if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
-            {
-                $subDivisions = $this->client->get($this->uri . "/api/v1/_data/subdivisions/{$unformattedAddress['country']}", [
-                    'headers' => [
-                        'Content-Type' => 'application/json; charset=UTF8',
-                        'timeout' => 30,
-                    ],
-                    'auth' => [
-                        $this->username,
-                        $this->password,
-                    ],
-                ]);
-
-                $subDivisionArray = (array)json_decode($subDivisions->getBody());
-                $this->subDivisions[$unformattedAddress['country']] = $subDivisionArray;
-            }
-
-            if (!array_key_exists($unformattedAddress['state'],$this->subDivisions[$unformattedAddress['country']]))
-            {
-                throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
-            }
-
-            if ($unformattedAddress['country'] == "US")
-            {
-                if (!$unformattedAddress['county'])
-                {
-                    throw new InvalidArgumentException("The address failed to validate, and a county is required for addresses in the US.");
-                }
-
-                if (!array_key_exists($unformattedAddress['state'],$this->counties))
-                {
-                    $counties = $this->client->get($this->uri . "/api/v1/_data/counties/{$unformattedAddress['state']}", [
-                        'headers' => [
-                            'Content-Type' => 'application/json; charset=UTF8',
-                            'timeout' => 30,
-                        ],
-                        'auth' => [
-                            $this->username,
-                            $this->password,
-                        ],
-                    ]);
-
-                    $countyArray = (array)json_decode($counties->getBody());
-                    $this->counties[$unformattedAddress['state']] = $countyArray;
-                }
-
-                if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
-                {
-                    throw new InvalidArgumentException("The county is not a valid county for the state.");
-                }
-            }
-
-            return $unformattedAddress;
-        }
-    }
 
     /**
      * @param $data
@@ -277,7 +169,20 @@ class AccountImporter
             'account_status_id' => (int)$data[3],
             'contact_name' => trim($data[16]),
         ];
-        $formattedAddress = $this->returnFormattedAddress($data);
+
+        $unformattedAddress = [
+            'line1' => trim($data[7]),
+            'line2' => trim($data[8]),
+            'city' => trim($data[9]),
+            'state' => trim($data[10]),
+            'county' => trim($data[11]),
+            'zip' => trim($data[12]),
+            'country' => trim($data[13]),
+            'latitude' => trim($data[14]),
+            'longitude' => trim($data[15]),
+        ];
+
+        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
 
         $payload = array_merge($payload,$formattedAddress);
 
@@ -349,25 +254,6 @@ class AccountImporter
         }
 
         return $payload;
-    }
-
-    /**
-     * Load the country data into a local array.
-     */
-    private function loadCountryData()
-    {
-        $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-        ]);
-
-        $this->countries = json_decode($response->getBody())->data;
     }
 
     /**
