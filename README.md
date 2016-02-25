@@ -78,4 +78,4 @@ To import account billing parameters, call the function **importAccountBillingPa
 
 By default, when importing accounts, they will inherit the default billing parameters set in Sonar. If you need to override this for specific accounts, use this function.
 
-`$results = $importer->importAccountBillingParameters("/home/simon/accountPackages.csv");`
+`$results = $importer->importAccountBillingParameters("/home/simon/accountBillingParameters.csv");`
