@@ -92,6 +92,8 @@ An account secondary address is any non-physical address. The only available bui
 ### Importing pre-tokenized credit cards
 To import pre-tokenized credit cards, call the function **importTokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with tokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the tokenized credit card template in the templates folder.
 
+Before using this function, **please ensure you have configured your credit card processor inside Sonar!**
+
 If your existing system tokenized your cards, you should use this function to move the tokens into Sonar.
 
 `$results = $importer->importTokenizedCreditCards("/home/simon/tokenizedCards.csv");`
@@ -99,6 +101,17 @@ If your existing system tokenized your cards, you should use this function to mo
 ### Importing untokenized credit cards
 To import untokenized credit cards, call the function **importUntokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with untokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized credit card template in the templates folder.
 
-If you currently store untokenized credit card data, you should use this function to import it. Please be mindful of your PCI compliance obligations when handling untokenized payment method data. Once the data is entered into Sonar, it will be tokenized - Sonar does not store any untokenized payment method information.
+Before using this function, **please ensure you have configured your credit card processor inside Sonar!**
 
-`$results = $importer->importUntokenizedCreditCards("/home/simon/tokenizedCards.csv");`
+If you currently store untokenized credit card data, you should use this function to import it. **Please be mindful of your PCI compliance obligations when handling untokenized payment method data.** Once the data is entered into Sonar, it will be tokenized - Sonar does not store any untokenized payment method information.
+
+`$results = $importer->importUntokenizedCreditCards("/home/simon/untokenizedCards.csv");`
+
+### Importing untokenized bank accounts
+To import untokenized bank accounts, call the function **importUntokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with untokenized bank account data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized bank account template in the templates folder.
+
+Before using this function, **please ensure you have configured your eCheck or ACH processor inside Sonar!**
+
+If you currently store untokenized bank account data, you should use this function to import it. Once the data is entered into Sonar, it will be tokenized if it is to be processed via eCheck.
+
+`$results = $importer->importUntokenizedBankAccounts("/home/simon/untokenizedBankAccounts.csv");`
