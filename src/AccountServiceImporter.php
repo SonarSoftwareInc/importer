@@ -81,19 +81,19 @@ class AccountServiceImporter
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row $row failed: $returnMessage");
+                    fwrite($failureLog,"Row $row failed: $returnMessage\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}");
+                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
 
                 $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]));
+                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
             }
         }
         else
