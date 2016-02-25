@@ -46,8 +46,8 @@ class Importer
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
-        $accountImporter = new AccountImporter();
-        return $accountImporter->import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID);
+        $importer = new AccountImporter();
+        return $importer->import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID);
     }
 
     /**
@@ -60,8 +60,8 @@ class Importer
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
-        $contactImporter = new ContactImporter();
-        return $contactImporter->import($pathToImportFile);
+        $importer = new ContactImporter();
+        return $importer->import($pathToImportFile);
     }
 
     /**
@@ -74,12 +74,12 @@ class Importer
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
-        $accountServiceImporter = new AccountServiceImporter();
-        return $accountServiceImporter->import($pathToImportFile);
+        $importer = new AccountServiceImporter();
+        return $importer->import($pathToImportFile);
     }
 
     /**
-     * @param $pathToImportFile - Input the full path to the account services CSV file.
+     * @param $pathToImportFile - Input the full path to the account packages CSV file.
      * @return array
      */
     public function importAccountPackages($pathToImportFile)
@@ -88,8 +88,22 @@ class Importer
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
-        $accountPackageImporter = new AccountPackageImporter();
-        return $accountPackageImporter->import($pathToImportFile);
+        $importer = new AccountPackageImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
+     * @param $pathToImportFile - Input the full path to the account billing parameters CSV file.
+     * @return array
+     */
+    public function importAccountBillingParameters($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new AccountBillingParameterImporter();
+        return $importer->import($pathToImportFile);
     }
 
     /**

@@ -67,8 +67,15 @@ This function is used to add recurring or expiring services to an account.
 `$results = $importer->importAccountServices("/home/simon/accountServices.csv");`
 
 ###Importing account packages
-To import account services, call the function **importAccountPackages** on the Importer class, passing in the path to a properly formatted CSV file with account/package relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account package template in the templates folder.
+To import account packages, call the function **importAccountPackages** on the Importer class, passing in the path to a properly formatted CSV file with account/package relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account package template in the templates folder.
 
 This function is used to add a package to an account.
 
 `$results = $importer->importAccountPackages("/home/simon/accountPackages.csv");`
+
+###Importing account billing parameters
+To import account billing parameters, call the function **importAccountBillingParameters** on the Importer class, passing in the path to a properly formatted CSV file with account billing parameter data. You will need to manipulate your data into the appropriate format before importing, by using the account billing parameter template in the templates folder.
+
+By default, when importing accounts, they will inherit the default billing parameters set in Sonar. If you need to override this for specific accounts, use this function.
+
+`$results = $importer->importAccountBillingParameters("/home/simon/accountPackages.csv");`

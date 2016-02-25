@@ -15,7 +15,8 @@
   "require": {
     "php": ">=5.4.0",
     "guzzlehttp/guzzle": "~5.0",
-    "vlucas/phpdotenv": "^2.2"
+    "vlucas/phpdotenv": "^2.2",
+    "nesbot/carbon": "^1.21"
   },
   "autoload": {
     "psr-4" : {
