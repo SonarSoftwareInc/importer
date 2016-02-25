@@ -91,7 +91,8 @@ class AccountImporter
                 {
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
-                    fwrite($failureLog,"Row $row failed: {$body->data}");
+                    $returnMessage = implode(", ",(array)$body->data->message);
+                    fwrite($failureLog,"Row $row failed: $returnMessage");
                     $returnData['failures'] += 1;
                     continue;
                 }
@@ -303,24 +304,24 @@ class AccountImporter
                 'extension' => trim($data[21]),
             ];
         }
-        if (trim($data[21]))
-        {
-            $phoneNumbers['home'] = [
-                'number' => trim($data[21]),
-                'extension' => null,
-            ];
-        }
         if (trim($data[22]))
         {
-            $phoneNumbers['mobile'] = [
+            $phoneNumbers['home'] = [
                 'number' => trim($data[22]),
                 'extension' => null,
             ];
         }
         if (trim($data[23]))
         {
-            $phoneNumbers['fax'] = [
+            $phoneNumbers['mobile'] = [
                 'number' => trim($data[23]),
+                'extension' => null,
+            ];
+        }
+        if (trim($data[24]))
+        {
+            $phoneNumbers['fax'] = [
+                'number' => trim($data[24]),
                 'extension' => null,
             ];
         }
