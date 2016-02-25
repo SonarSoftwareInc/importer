@@ -135,6 +135,20 @@ class Importer
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the untokenized credit card CSV file.
+     * @return array
+     */
+    public function importUntokenizedCreditCards($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new UntokenizedCreditCardImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool

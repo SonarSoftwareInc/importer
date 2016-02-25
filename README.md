@@ -95,3 +95,10 @@ To import pre-tokenized credit cards, call the function **importTokenizedCreditC
 If your existing system tokenized your cards, you should use this function to move the tokens into Sonar.
 
 `$results = $importer->importTokenizedCreditCards("/home/simon/tokenizedCards.csv");`
+
+### Importing untokenized credit cards
+To import untokenized credit cards, call the function **importUntokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with untokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized credit card template in the templates folder.
+
+If you currently store untokenized credit card data, you should use this function to import it. Please be mindful of your PCI compliance obligations when handling untokenized payment method data. Once the data is entered into Sonar, it will be tokenized - Sonar does not store any untokenized payment method information.
+
+`$results = $importer->importUntokenizedCreditCards("/home/simon/tokenizedCards.csv");`
