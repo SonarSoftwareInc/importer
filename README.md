@@ -67,7 +67,7 @@ This function is used to add recurring or expiring services to an account.
 `$results = $importer->importAccountServices("/home/simon/accountServices.csv");`
 
 ###Importing account packages
-To import account services, call the function **importAccountPackages** on the Importer class, passing in the path to a properly formatted CSV file with account/service relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account package template in the templates folder.
+To import account services, call the function **importAccountPackages** on the Importer class, passing in the path to a properly formatted CSV file with account/package relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account package template in the templates folder.
 
 This function is used to add a package to an account.
 
