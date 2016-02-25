@@ -51,9 +51,12 @@ class AccountImporter
     {
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
-            $this->validateImportFile($handle);
+            $this->validateImportFile($pathToImportFile);
 
-            mkdir(__DIR__ . "/../log_output");
+            if (!file_exists(__DIR__ . "/../log_output"))
+            {
+                mkdir(__DIR__ . "/../log_output");
+            }
 
             $failureLogName = tempnam(__DIR__ . "/../log_output","account_import_failures");
             $failureLog = fopen($failureLogName,"w");
@@ -91,7 +94,7 @@ class AccountImporter
                 {
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->data->message);
+                    $returnMessage = implode(", ",(array)$body->error->message);
                     fwrite($failureLog,"Row $row failed: $returnMessage");
                     $returnData['failures'] += 1;
                     continue;
@@ -120,22 +123,27 @@ class AccountImporter
 
     /**
      * Validate all the data in the import file.
-     * @param $fileHandle
+     * @param $pathToImportFile
      */
-    private function validateImportFile($fileHandle)
+    private function validateImportFile($pathToImportFile)
     {
         $requiredColumns = [ 0,1,2,3,7,9,10,13,16 ];
 
-        $row = 0;
-        while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
-            $row++;
-            foreach ($requiredColumns as $colNumber)
-            {
-                if (trim($data[$colNumber]) == '')
-                {
-                    throw new InvalidArgumentException("In the account import, column number " . ($colNumber+1) . " is required, and it is empty on row $row.");
+        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the account import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
                 }
             }
+        }
+        else
+        {
+            throw new InvalidArgumentException("Could not open import file.");
         }
 
         return;

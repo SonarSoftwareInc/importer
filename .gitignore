@@ -1,2 +1,4 @@
 .idea/*
 templates/.~lock*
+log_output/*
+src/.env
