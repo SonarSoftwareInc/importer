@@ -79,6 +79,20 @@ class Importer
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the account services CSV file.
+     * @return array
+     */
+    public function importAccountPackages($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $accountPackageImporter = new AccountPackageImporter();
+        return $accountPackageImporter->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool
