@@ -112,37 +112,37 @@ class Importer
         $versionToCheckArray = explode(".",$versionToCheck);
 
         //1.0.0 is older than 2.0.0
-        if ($versionToCheckArray[0] < $currentVersionArray[0])
+        if ($currentVersionArray[0] < $versionToCheckArray[0])
         {
             return false;
         }
 
-        if ($versionToCheckArray[0] > $currentVersionArray[0])
+        if ($currentVersionArray[0] > $versionToCheckArray[0])
         {
             return true;
         }
 
         //Same major version
-        if ($versionToCheckArray[0] == $currentVersionArray[0])
+        if ($currentVersionArray[0] == $versionToCheckArray[0])
         {
-            if ($versionToCheckArray[1] < $currentVersionArray[1])
+            if ($currentVersionArray[1] < $versionToCheckArray[1])
             {
                 return false;
             }
 
-            if ($versionToCheckArray[1] > $currentVersionArray[1])
+            if ($currentVersionArray[1] > $versionToCheckArray[1])
             {
                 return true;
             }
 
-            if ($versionToCheckArray[1] == $currentVersionArray[1])
+            if ($currentVersionArray[1] == $versionToCheckArray[1])
             {
-                if ($versionToCheckArray[2] < $currentVersionArray[2])
+                if ($currentVersionArray[2] < $versionToCheckArray[2])
                 {
                     return false;
                 }
 
-                if ($versionToCheckArray[2] >= $currentVersionArray[2])
+                if ($currentVersionArray[2] >= $versionToCheckArray[2])
                 {
                     return true;
                 }
