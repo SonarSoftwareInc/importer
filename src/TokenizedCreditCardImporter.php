@@ -5,15 +5,14 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use Carbon\Carbon;
 
-class AccountSecondaryAddressImporter
+class TokenizedCreditCardImporter
 {
     private $uri;
     private $username;
     private $password;
     private $client;
-
-    private $addressFormatter;
 
     /**
      * Importer constructor.
@@ -35,8 +34,6 @@ class AccountSecondaryAddressImporter
         $this->password = getenv("PASSWORD");
 
         $this->client = new \GuzzleHttp\Client();
-
-        $this->addressFormatter = new AddressFormatter();
     }
 
     /**
@@ -54,10 +51,10 @@ class AccountSecondaryAddressImporter
                 mkdir(__DIR__ . "/../log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_failures");
+            $failureLogName = tempnam(__DIR__ . "/../log_output","tokenized_card_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_successes");
+            $successLogName = tempnam(__DIR__ . "/../log_output","tokenized_card_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
@@ -71,7 +68,7 @@ class AccountSecondaryAddressImporter
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $row++;
                 try {
-                    $this->createSecondaryAddress($data);
+                    $this->createTokenizedCard($data);
                 }
                 catch (ClientException $e)
                 {
@@ -110,7 +107,7 @@ class AccountSecondaryAddressImporter
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1,2,4,5,7,8 ];
+        $requiredColumns = [ 0,2,3,4,5,6,7 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -119,7 +116,7 @@ class AccountSecondaryAddressImporter
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the account secondary address import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                        throw new InvalidArgumentException("In the tokenized credit card import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
                 }
             }
@@ -138,35 +135,34 @@ class AccountSecondaryAddressImporter
      */
     private function buildPayload($data)
     {
-        $unformattedAddress = [
-            'line1' => trim($data[2]),
-            'line2' => trim($data[3]),
-            'city' => trim($data[4]),
-            'state' => trim($data[5]),
-            'county' => trim($data[6]),
-            'zip' => trim($data[7]),
-            'country' => trim($data[8]),
-            'latitude' => trim($data[9]),
-            'longitude' => trim($data[10]),
+        $payload = [
+            'token' => trim($data[2]),
+            'type' => 'credit card',
+            'identifier' => trim($data[3]),
+            'expiration_year' => trim($data[4]),
+            'expiration_month' => trim($data[5]),
+            'auto' => (boolean)$data[6],
+            'card_type' => trim($data[7]),
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
+        if (trim($data[1]))
+        {
+            $payload['payment_processor_customer_profile_id'] = trim($data[1]);
+        }
 
-        $formattedAddress['address_type_id'] = (int)trim($data[1]);
-
-        return $formattedAddress;
+        return $payload;
     }
 
     /**
      * @param $data
      * @return mixed
      */
-    private function createSecondaryAddress($data)
+    private function createTokenizedCard($data)
     {
         $payload = $this->buildPayload($data);
         $accountID = (int)trim($data[0]);
 
-        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/addresses", [
+        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/tokenized_payment_method", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
