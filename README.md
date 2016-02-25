@@ -107,11 +107,21 @@ If you currently store untokenized credit card data, you should use this functio
 
 `$results = $importer->importUntokenizedCreditCards("/home/simon/untokenizedCards.csv");`
 
+### Importing tokenized bank accounts/eChecks
+To import tokenized bank accounts, call the function **importTokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with tokenized eCheck data. You will need to manipulate your data into the appropriate format before importing, by using the tokenized bank account template in the templates folder.
+
+Before using this function, **please ensure you have configured your eCheck processor inside Sonar!**
+
+If you currently store tokenized eCheck accounts, you should use this function to move the tokens into Sonar.
+
+`$results = $importer->importTokenizedBankAccounts("/home/simon/tokenizedBankAccounts.csv");`
+
+
 ### Importing untokenized bank accounts
 To import untokenized bank accounts, call the function **importUntokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with untokenized bank account data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized bank account template in the templates folder.
 
 Before using this function, **please ensure you have configured your eCheck or ACH processor inside Sonar!**
 
-If you currently store untokenized bank account data, you should use this function to import it. Once the data is entered into Sonar, it will be tokenized if it is to be processed via eCheck.
+If you currently store untokenized bank account data, you should use this function to import it. Once the data is entered into Sonar, it will be tokenized if it is to be processed via eCheck. If using ACH, the data will be AES-256 encrypted.
 
 `$results = $importer->importUntokenizedBankAccounts("/home/simon/untokenizedBankAccounts.csv");`
