@@ -7,13 +7,11 @@ If you do not have a background in software development, you are not expected to
 The recommended installation method is using [Composer](https://getcomposer.org "Composer"). You can install by running `composer require sonarsoftware/importer`. Alternatively, you can download the code directly from Github and include the necessary classes into your scripts.
 However, we strongly recommend using Composer to simplify auto-loading.
 
-##Setup
-To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
-that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
-
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
 formatting tab have notes with more in-depth descriptions.
+
+##Using the importer
 
 ###First Steps
 
@@ -22,7 +20,12 @@ formatting tab have notes with more in-depth descriptions.
 3. Setup your payment processor information in Sonar, if you are importing payment methods. You will need a functioning payment processor to import credit cards or eCheck accounts.
 4. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
 
-##How to use
+
+###Setup
+To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
+that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
+
+###How to use
 To use the importer, instantiate the Importer class.
 
 `$importer = new SonarSoftware\Importer\Importer();`
