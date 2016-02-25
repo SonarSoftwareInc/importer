@@ -36,15 +36,18 @@ class Importer
 
     /**
      * @param $pathToImportFile - Input the full path to the accounts CSV file, which should be generated based on the template in 'templates'.
+     * @param int $debitAdjustmentID
+     * @param int $creditAdjustmentID
      * @return array
      */
-    public function importAccounts($pathToImportFile)
+    public function importAccounts($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
     {
+        set_time_limit(0);
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
         $accountImporter = new AccountImporter();
-        return $accountImporter->import($pathToImportFile);
+        return $accountImporter->import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID);
     }
 
     /**

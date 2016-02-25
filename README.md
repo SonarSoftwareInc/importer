@@ -21,9 +21,11 @@ To use the importer, instantiate the Importer class.
 `$importer = new SonarSoftware\Importer\Importer();`
 
 ###Importing accounts
-To import accounts, call the function **importAccounts** on the Importer class, passing in the path to a properly formatted CSV file with account data. You will need to manipulate your data into the appropriate format before importing.
+To import accounts, call the function **importAccounts** on the Importer class, passing in the path to a properly formatted CSV file with account data. You will need to manipulate your data into the appropriate format before importing, by using the account template in the templates folder.
 
-`$results = $importer->importAccounts("/home/simon/accounts.csv");`
+You should also input a debit adjustment service ID to use for positive prior balances and a credit adjustment service ID to use for negative prior balances, as the second and third parameters, respectively. In the example below, `1` is the ID of the debit adjustment service and `2` is the ID of the credit adjustment service.
+
+`$results = $importer->importAccounts("/home/simon/accounts.csv", 1, 2);`
 
 Assuming there are no fatal errors (which will throw an exception) the importer will write logs into the **log_output** folder. This folder will contain a fail and success log file, which will report any failures, as well as successes. An import is
 not fully successful unless the failure log file is completely empty!

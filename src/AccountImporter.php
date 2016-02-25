@@ -44,14 +44,17 @@ class AccountImporter
 
     /**
      * @param $pathToImportFile
+     * @param $debitAdjustmentID
+     * @param $creditAdjustmentID
      * @return array
-     * @throws InvalidArgumentException
      */
-    public function import($pathToImportFile)
+    public function import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
     {
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $this->validateImportFile($pathToImportFile);
+            $this->validateServices($debitAdjustmentID, $creditAdjustmentID);
+            $this->loadCountryData();
 
             if (!file_exists(__DIR__ . "/../log_output"))
             {
@@ -71,24 +74,30 @@ class AccountImporter
                 'success_log_name' => $successLogName,
             ];
 
-            $this->loadCountryData();
-
             $row = 0;
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $row++;
                 try {
-                    $payload = $this->buildPayload($data);
-                    $this->client->post($this->uri . "/api/v1/accounts", [
-                        'headers' => [
-                            'Content-Type' => 'application/json; charset=UTF8',
-                            'timeout' => 30,
-                        ],
-                        'auth' => [
-                            $this->username,
-                            $this->password,
-                        ],
-                        'json' => $payload,
-                    ]);
+                    $this->createAccount($data);
+                }
+                catch (ClientException $e)
+                {
+                    $response = $e->getResponse();
+                    $body = json_decode($response->getBody());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    fwrite($failureLog,"Row $row failed: $returnMessage");
+                    $returnData['failures'] += 1;
+                    continue;
+                }
+                catch (Exception $e)
+                {
+                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}");
+                    $returnData['failures'] += 1;
+                    continue;
+                }
+
+                try {
+                    $this->addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID);
                 }
                 catch (ClientException $e)
                 {
@@ -107,7 +116,7 @@ class AccountImporter
                 }
 
                 $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for account ID {$payload['id']}");
+                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]));
             }
         }
         else
@@ -342,6 +351,9 @@ class AccountImporter
         return $payload;
     }
 
+    /**
+     * Load the country data into a local array.
+     */
     private function loadCountryData()
     {
         $response = $this->client->get($this->uri . "/api/v1/_data/countries", [
@@ -356,5 +368,124 @@ class AccountImporter
         ]);
 
         $this->countries = json_decode($response->getBody())->data;
+    }
+
+    /**
+     * Add a prior balance onto the account
+     * @param $data
+     */
+    private function addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID)
+    {
+        $id = (int)trim($data[0]);
+        $priorBalance = 0;
+        if (trim($data[25]))
+        {
+            $priorBalance = number_format(trim((float)$data[25]),2,".","");
+            if ($priorBalance != 0)
+            {
+                if ($priorBalance > 0)
+                {
+                    $serviceID = $debitAdjustmentID;
+                }
+                else
+                {
+                    $serviceID = $creditAdjustmentID;
+                }
+
+                $response = $this->client->post($this->uri . "/api/v1/accounts/$id/services", [
+                    'headers' => [
+                        'Content-Type' => 'application/json; charset=UTF8',
+                        'timeout' => 30,
+                    ],
+                    'auth' => [
+                        $this->username,
+                        $this->password,
+                    ],
+                    'json' => [
+                        'service_id' => $serviceID,
+                        'prorate' => false,
+                        'amount' => $priorBalance
+                    ]
+                ]);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Validate that the service IDs are valid debit/credit adjustment services.
+     * @param $debitAdjustmentID
+     * @param $creditAdjustmentID
+     */
+    private function validateServices($debitAdjustmentID, $creditAdjustmentID)
+    {
+        try {
+            $response = $this->client->get($this->uri . "/api/v1/system/services/$debitAdjustmentID", [
+                'headers' => [
+                    'Content-Type' => 'application/json; charset=UTF8',
+                    'timeout' => 30,
+                ],
+                'auth' => [
+                    $this->username,
+                    $this->password,
+                ],
+            ]);
+        }
+        catch (ClientException $e)
+        {
+            throw new InvalidArgumentException("$debitAdjustmentID is not a valid service ID.");
+        }
+
+        $objResponse = json_decode($response->getBody());
+        if ($objResponse->data->type != "adjustment" || $objResponse->data->application != "debit")
+        {
+            throw new InvalidArgumentException("$debitAdjustmentID is not a valid debit adjustment service.");
+        }
+
+        try {
+            $response = $this->client->get($this->uri . "/api/v1/system/services/$creditAdjustmentID", [
+                'headers' => [
+                    'Content-Type' => 'application/json; charset=UTF8',
+                    'timeout' => 30,
+                ],
+                'auth' => [
+                    $this->username,
+                    $this->password,
+                ],
+            ]);
+        }
+        catch (ClientException $e)
+        {
+            throw new InvalidArgumentException("$creditAdjustmentID is not a valid service ID.");
+        }
+
+        $objResponse = json_decode($response->getBody());
+        if ($objResponse->data->type != "adjustment" || $objResponse->data->application != "credit")
+        {
+            throw new InvalidArgumentException("$creditAdjustmentID is not a valid debit adjustment service.");
+        }
+
+        return;
+    }
+
+    /**
+     * Create a new account using the Sonar API
+     * @param $data
+     */
+    private function createAccount($data)
+    {
+        $payload = $this->buildPayload($data);
+        return $this->client->post($this->uri . "/api/v1/accounts", [
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ],
+            'json' => $payload,
+        ]);
     }
 }
