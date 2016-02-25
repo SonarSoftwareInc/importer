@@ -35,7 +35,7 @@ class Importer
     }
 
     /**
-     * @param $pathToImportFile - Input the full path to the accounts CSV file, which should be generated based on the template in 'templates'.
+     * @param $pathToImportFile - Input the full path to the accounts CSV file.
      * @param int $debitAdjustmentID - An ID for an unlimited debit adjustment service
      * @param int $creditAdjustmentID - An ID for an unlimited credit adjustment service
      * @return array
@@ -51,7 +51,7 @@ class Importer
     }
 
     /**
-     * @param $pathToImportFile  - Input the full path to the accounts CSV file, which should be generated based on the template in 'templates'.
+     * @param $pathToImportFile  - Input the full path to the accounts CSV file.
      * @return array
      */
     public function importContacts($pathToImportFile)
@@ -62,6 +62,20 @@ class Importer
 
         $contactImporter = new ContactImporter();
         return $contactImporter->import($pathToImportFile);
+    }
+
+    /**
+     * @param $pathToImportFile - Input the full path to the account services CSV file.
+     * @return array
+     */
+    public function importAccountServices($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $accountServiceImporter = new AccountServiceImporter();
+        return $accountServiceImporter->import($pathToImportFile);
     }
 
     /**

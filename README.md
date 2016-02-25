@@ -58,3 +58,10 @@ You should also input a debit adjustment service ID to use for positive prior ba
 To import contacts, call the function **importContacts** on the Importer class, passing in the path to a properly formatted CSV file with contact data. You will need to manipulate your data into the appropriate format before importing, by using the contact template in the templates folder.
 
 `$results = $importer->importContacts("/home/simon/contacts.csv");`
+
+###Importing account services
+To import account services, call the function **importAccountServices** on the Importer class, passing in the path to a properly formatted CSV file with account/service relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account service template in the templates folder.
+
+This function is used to add recurring or expiring services to an account.
+
+`$results = $importer->importAccountServices("/home/simon/accountServices.csv");`
