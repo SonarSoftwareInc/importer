@@ -79,3 +79,10 @@ To import account billing parameters, call the function **importAccountBillingPa
 By default, when importing accounts, they will inherit the default billing parameters set in Sonar. If you need to override this for specific accounts, use this function.
 
 `$results = $importer->importAccountBillingParameters("/home/simon/accountBillingParameters.csv");`
+
+###Importing account secondary addresses
+To import account secondary addresses, call the function **importAccountSecondaryAddresses** on the Importer class, passing in the path to a properly formatted CSV file with account secondary address data. You will need to manipulate your data into the appropriate format before importing, by using the account secondary addresses template in the templates folder.
+
+An account secondary address is any non-physical address. The only available built in type is a mailing address, but you can also create additional types.
+
+`$results = $importer->importAccountSecondaryAddresses("/home/simon/accountSecondaryAddresses.csv");`
