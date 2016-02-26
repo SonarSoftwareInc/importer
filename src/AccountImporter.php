@@ -349,7 +349,7 @@ class AccountImporter
         $objResponse = json_decode($response->getBody());
         if ($objResponse->data->type != "adjustment" || $objResponse->data->application != "credit")
         {
-            throw new InvalidArgumentException("$creditAdjustmentID is not a valid debit adjustment service.");
+            throw new InvalidArgumentException("$creditAdjustmentID is not a valid credit adjustment service.");
         }
 
         return;
