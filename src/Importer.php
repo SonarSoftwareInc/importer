@@ -191,6 +191,20 @@ class Importer
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the account notes CSV file.
+     * @return array
+     */
+    public function importAccountNotes($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new NoteImporter();
+        return $importer->import($pathToImportFile,"accounts");
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool

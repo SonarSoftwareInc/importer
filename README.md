@@ -137,3 +137,8 @@ To import account files, call the function **importAccountFiles** on the Importe
 This function is used to upload files relevant to your accounts to the account file tab.
 
 `$results = $importer->importAccountFiles("/home/simon/accountFiles.csv");`
+
+### Importing account notes
+To import account notes, call the function **importAccountNotes** on the Importer class, passing in the path to a properly formatted CSV file with account note data. You will need to manipulate your data into the appropriate format before importing, by using the account notes template in the templates folder.
+
+`$results = $importer->importAccountNotes("/home/simon/accountNotes.csv");`
