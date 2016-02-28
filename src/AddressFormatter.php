@@ -114,8 +114,8 @@ class AddressFormatter
                     ],
                 ]);
 
-                $subDivisionArray = (array)json_decode($subDivisions->getBody());
-                $this->subDivisions[$unformattedAddress['country']] = $subDivisionArray;
+                $subDivisionObject = json_decode($subDivisions->getBody());
+                $this->subDivisions[$unformattedAddress['country']] = (array)$subDivisionObject->data;
             }
 
             if (!array_key_exists($unformattedAddress['state'],$this->subDivisions[$unformattedAddress['country']]))
