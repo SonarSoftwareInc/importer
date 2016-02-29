@@ -176,6 +176,22 @@ class AccountBillingParameterImporter
                         throw new InvalidArgumentException("{$data[8]} is an invalid separate invoice day in row $row.");
                     }
                 }
+
+                if (trim($data[9]))
+                {
+                    if ((int)trim($data[9]) < 0)
+                    {
+                        throw new InvalidArgumentException("{$data[9]} is an invalid auto pay day in row $row.");
+                    }
+                }
+
+                if (trim($data[10]))
+                {
+                    if (!in_array(trim(strtolower($data[10])),['invoice','statement']))
+                    {
+                        throw new InvalidArgumentException("{$data[10]} is an invalid bill mode in row $row, must be one of 'invoice' or 'statement'");
+                    }
+                }
             }
         }
         else
@@ -225,6 +241,14 @@ class AccountBillingParameterImporter
         {
             $payload['separate_invoice_day_enabled'] = true;
             $payload['invoice_day'] = (int)trim($data[8]);
+        }
+        if (trim($data[9]))
+        {
+            $payload['auto_pay_days'] = (int)trim($data[9]);
+        }
+        if (trim($data[10]))
+        {
+            $payload['bill_mode'] = strtolower(trim($data[10]));
         }
         return $payload;
     }
