@@ -14,6 +14,9 @@ class AccountImporter
     private $password;
     private $client;
 
+    private $accountsWithSubAccounts = array();
+    private $row;
+
     private $addressFormatter;
 
     /**
@@ -71,49 +74,61 @@ class AccountImporter
                 'success_log_name' => $successLogName,
             ];
 
-            $row = 0;
+            $this->row = 0;
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $row++;
+                $this->row++;
                 try {
-                    $this->createAccount($data);
+                    $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID);
                 }
                 catch (ClientException $e)
                 {
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row $row failed: $returnMessage\n");
+                    fwrite($failureLog,"Row {$this->row} failed: $returnMessage\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-
-                try {
-                    $this->addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row $row failed: $returnMessage\n");
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
+                    fwrite($failureLog,"Row {$this->row} failed: {$e->getMessage()}\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
 
                 $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+                fwrite($successLog,"Row {$this->row} succeeded for account ID " . trim($data[0]) . "\n");
+            }
+
+            /**
+             * We do accounts with sub accounts last, as the children may not have been imported.
+             */
+            if (count($this->accountsWithSubAccounts) > 0)
+            {
+                foreach ($this->accountsWithSubAccounts as $row => $data)
+                {
+                    try {
+                        $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, false);
+                    }
+                    catch (ClientException $e)
+                    {
+                        $response = $e->getResponse();
+                        $body = json_decode($response->getBody());
+                        $returnMessage = implode(", ",(array)$body->error->message);
+                        fwrite($failureLog,"Row $row failed: $returnMessage\n");
+                        $returnData['failures'] += 1;
+                        continue;
+                    }
+                    catch (Exception $e)
+                    {
+                        fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
+                        $returnData['failures'] += 1;
+                        continue;
+                    }
+
+                    $returnData['successes'] += 1;
+                    fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+                }
             }
         }
         else
@@ -265,6 +280,7 @@ class AccountImporter
     /**
      * Add a prior balance onto the account
      * @param $data
+     * @return bool
      */
     private function addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID)
     {
@@ -302,7 +318,7 @@ class AccountImporter
             }
         }
 
-        return;
+        return true;
     }
 
     /**
@@ -364,11 +380,21 @@ class AccountImporter
     /**
      * Create a new account using the Sonar API
      * @param $data
+     * @param $creditAdjustmentID
+     * @param $debitAdjustmentID
+     * @param bool $delaySubAccounts
+     * @return bool
      */
-    private function createAccount($data)
+    private function createAccount($data, $creditAdjustmentID, $debitAdjustmentID, $delaySubAccounts = true)
     {
         $payload = $this->buildPayload($data);
-        return $this->client->post($this->uri . "/api/v1/accounts", [
+        if (array_key_exists("sub_accounts",$payload) && $delaySubAccounts === true)
+        {
+            $this->accountsWithSubAccounts[$this->row] = $data;
+            return false;
+        }
+
+        $response = $this->client->post($this->uri . "/api/v1/accounts", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -379,5 +405,7 @@ class AccountImporter
             ],
             'json' => $payload,
         ]);
+
+        return $this->addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID);
     }
 }
