@@ -188,6 +188,14 @@ class AccountServiceImporter
                 {
                     throw new InvalidArgumentException("Service ID {$data[1]} is not a recurring or expiring service.");
                 }
+
+                if (trim($data[2]))
+                {
+                    if (!is_numeric($data[2]))
+                    {
+                        throw new InvalidArgumentException("Price override on row $row is not numeric.");
+                    }
+                }
             }
         }
         else
@@ -199,16 +207,33 @@ class AccountServiceImporter
     }
 
     /**
+     * @param $data
+     * @return array
+     */
+    private function buildPayload($data)
+    {
+        $payload = [
+            'service_id' => (int)trim($data[1]),
+            'prorate' => false
+        ];
+
+        if ($data[2])
+        {
+            $payload['price_override'] = (float)trim($data[2]);
+            $payload['price_override_reason'] = trim($data[3]) ? trim($data[3]) : 'Unknown';
+        }
+
+        return $payload;
+    }
+
+    /**
      * Add service to account
      * @param $data
      * @return mixed
      */
     private function addServiceToAccount($data)
     {
-        $payload = [
-            'service_id' => (int)trim($data[1]),
-            'prorate' => false
-        ];
+        $payload = $this->buildPayload($data);
 
         $accountID = (int)trim($data[0]);
 

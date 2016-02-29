@@ -72,7 +72,7 @@ class Importer
     {
         set_time_limit(0);
         $this->validateCredentials();
-        $this->validateVersion("0.3.2");
+        $this->validateVersion("0.3.3");
 
         $importer = new AccountServiceImporter();
         return $importer->import($pathToImportFile);
@@ -100,7 +100,7 @@ class Importer
     {
         set_time_limit(0);
         $this->validateCredentials();
-        $this->validateVersion("0.3.2");
+        $this->validateVersion("0.3.3");
 
         $importer = new AccountBillingParameterImporter();
         return $importer->import($pathToImportFile);
