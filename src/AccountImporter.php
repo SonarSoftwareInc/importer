@@ -5,6 +5,7 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use Carbon\Carbon;
 
 class AccountImporter
 {
@@ -199,7 +200,12 @@ class AccountImporter
         }
         if (trim($data[6]))
         {
-            $payload['next_bill_date'] = trim($data[6]);
+            $carbon = Carbon::createFromFormat("Y-m-d",$data[6]);
+            $now = Carbon::now();
+            if ($carbon->gt($now))
+            {
+                $payload['next_bill_date'] = trim($data[6]);
+            }
         }
         if (trim($data[17]))
         {
@@ -263,7 +269,7 @@ class AccountImporter
     private function addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID)
     {
         $id = (int)trim($data[0]);
-        $priorBalance = 0;
+
         if (trim($data[25]))
         {
             $priorBalance = number_format(trim((float)$data[25]),2,".","");
@@ -290,7 +296,7 @@ class AccountImporter
                     'json' => [
                         'service_id' => $serviceID,
                         'prorate' => false,
-                        'amount' => $priorBalance
+                        'amount' => abs($priorBalance)
                     ]
                 ]);
             }
