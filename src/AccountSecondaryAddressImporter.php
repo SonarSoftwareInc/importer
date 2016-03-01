@@ -150,7 +150,7 @@ class AccountSecondaryAddressImporter
             'longitude' => trim($data[10]),
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
+        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, false);
 
         $formattedAddress['address_type_id'] = (int)trim($data[1]);
 
