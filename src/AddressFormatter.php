@@ -66,17 +66,55 @@ class AddressFormatter
     /**
      * Return a formatted address for use in the API import. Throws an InvalidArgumentException if something is invalid in the address.
      * @param $unformattedAddress
+     * @param bool $validate - Whether or not to try to convert the address to a mappable format. Should be set to 'false' for mailing addresses.
      * @return array
      */
-    public function formatAddress($unformattedAddress)
+    public function formatAddress($unformattedAddress, $validate = true)
     {
         if (!array_key_exists($unformattedAddress['country'],$this->countries))
         {
             throw new InvalidArgumentException($unformattedAddress['country'] . " is not a valid country.");
         }
 
-        try {
-            $validatedAddressResponse = $this->client->post($this->uri . "/api/v1/_data/validate_address", [
+        if ($validate === true)
+        {
+            try {
+                $validatedAddressResponse = $this->client->post($this->uri . "/api/v1/_data/validate_address", [
+                    'headers' => [
+                        'Content-Type' => 'application/json; charset=UTF8',
+                        'timeout' => 30,
+                    ],
+                    'auth' => [
+                        $this->username,
+                        $this->password,
+                    ],
+                    'json' => $unformattedAddress,
+                ]);
+
+                $address = (array)json_decode($validatedAddressResponse->getBody())->data;
+                if ($unformattedAddress['latitude'] && $unformattedAddress['longitude'])
+                {
+                    $address['latitude'] = $unformattedAddress['latitude'];
+                    $address['longitude'] = $unformattedAddress['longitude'];
+                }
+                return $address;
+            }
+            catch (Exception $e)
+            {
+                return $this->doChecksOnUnvalidatedAddress($unformattedAddress);
+            }
+        }
+        else
+        {
+            return $this->doChecksOnUnvalidatedAddress($unformattedAddress);
+        }
+    }
+
+    private function doChecksOnUnvalidatedAddress($unformattedAddress)
+    {
+        if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
+        {
+            $subDivisions = $this->client->get($this->uri . "/api/v1/_data/subdivisions/{$unformattedAddress['country']}", [
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
                     'timeout' => 30,
@@ -85,25 +123,27 @@ class AddressFormatter
                     $this->username,
                     $this->password,
                 ],
-                'json' => $unformattedAddress,
             ]);
 
-            $address = (array)json_decode($validatedAddressResponse->getBody())->data;
-            if ($unformattedAddress['latitude'] && $unformattedAddress['longitude'])
-            {
-                $address['latitude'] = $unformattedAddress['latitude'];
-                $address['longitude'] = $unformattedAddress['longitude'];
-            }
-            return $address;
+            $subDivisionObject = json_decode($subDivisions->getBody());
+            $this->subDivisions[$unformattedAddress['country']] = (array)$subDivisionObject->data;
         }
-        catch (Exception $e)
+
+        if (!array_key_exists($unformattedAddress['state'],$this->subDivisions[$unformattedAddress['country']]))
         {
-            /**
-             * The address failed to validate, but we will still attempt to validate individual parts of it to see if it can be used.
-             */
-            if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
+            throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
+        }
+
+        if ($unformattedAddress['country'] == "US")
+        {
+            if (!$unformattedAddress['county'])
             {
-                $subDivisions = $this->client->get($this->uri . "/api/v1/_data/subdivisions/{$unformattedAddress['country']}", [
+                throw new InvalidArgumentException("The address failed to validate, and a county is required for addresses in the US.");
+            }
+
+            if (!array_key_exists($unformattedAddress['state'],$this->counties))
+            {
+                $counties = $this->client->get($this->uri . "/api/v1/_data/counties/{$unformattedAddress['state']}", [
                     'headers' => [
                         'Content-Type' => 'application/json; charset=UTF8',
                         'timeout' => 30,
@@ -114,46 +154,16 @@ class AddressFormatter
                     ],
                 ]);
 
-                $subDivisionObject = json_decode($subDivisions->getBody());
-                $this->subDivisions[$unformattedAddress['country']] = (array)$subDivisionObject->data;
+                $countyArray = (array)json_decode($counties->getBody());
+                $this->counties[$unformattedAddress['state']] = $countyArray;
             }
 
-            if (!array_key_exists($unformattedAddress['state'],$this->subDivisions[$unformattedAddress['country']]))
+            if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
             {
-                throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
+                throw new InvalidArgumentException("The county is not a valid county for the state.");
             }
-
-            if ($unformattedAddress['country'] == "US")
-            {
-                if (!$unformattedAddress['county'])
-                {
-                    throw new InvalidArgumentException("The address failed to validate, and a county is required for addresses in the US.");
-                }
-
-                if (!array_key_exists($unformattedAddress['state'],$this->counties))
-                {
-                    $counties = $this->client->get($this->uri . "/api/v1/_data/counties/{$unformattedAddress['state']}", [
-                        'headers' => [
-                            'Content-Type' => 'application/json; charset=UTF8',
-                            'timeout' => 30,
-                        ],
-                        'auth' => [
-                            $this->username,
-                            $this->password,
-                        ],
-                    ]);
-
-                    $countyArray = (array)json_decode($counties->getBody());
-                    $this->counties[$unformattedAddress['state']] = $countyArray;
-                }
-
-                if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
-                {
-                    throw new InvalidArgumentException("The county is not a valid county for the state.");
-                }
-            }
-
-            return $unformattedAddress;
         }
+
+        return $unformattedAddress;
     }
 }

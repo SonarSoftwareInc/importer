@@ -139,7 +139,7 @@ class UntokenizedBankAccountImporter
             'account_number' => trim($data[1]),
             'routing_number' => trim($data[2]),
             'name_on_account' => trim($data[3]),
-            'account_type' => trim($data[4]),
+            'account_type' => strtolower(trim($data[4])),
             'auto' => (boolean)$data[5],
         ];
     }

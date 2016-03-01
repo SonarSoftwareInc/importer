@@ -78,7 +78,7 @@ class AccountImporter
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $this->row++;
                 try {
-                    $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID);
+                    $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, true);
                 }
                 catch (ClientException $e)
                 {

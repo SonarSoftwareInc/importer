@@ -142,7 +142,7 @@ class TokenizedCreditCardImporter
             'expiration_year' => trim($data[4]),
             'expiration_month' => trim($data[5]),
             'auto' => (boolean)$data[6],
-            'card_type' => trim($data[7]),
+            'card_type' => strtolower(trim($data[7])),
         ];
 
         if (trim($data[1]))
