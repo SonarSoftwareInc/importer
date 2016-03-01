@@ -108,16 +108,17 @@ class Importer
 
     /**
      * @param $pathToImportFile - Input the full path to the account secondary address CSV file.
+     * @param bool $validateAddress - Set this to 'true' if you want Sonar to submit the address for verification. This may cause issues with some addresses (e.g. PO Boxes)
      * @return array
      */
-    public function importAccountSecondaryAddresses($pathToImportFile)
+    public function importAccountSecondaryAddresses($pathToImportFile, $validateAddress = false)
     {
         set_time_limit(0);
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
         $importer = new AccountSecondaryAddressImporter();
-        return $importer->import($pathToImportFile);
+        return $importer->import($pathToImportFile, $validateAddress);
     }
 
     /**
@@ -202,6 +203,21 @@ class Importer
 
         $importer = new NoteImporter();
         return $importer->import($pathToImportFile,"accounts");
+    }
+
+    /**
+     * @param $pathToImportFile - Input the full path to the account notes CSV file.
+     * @param bool $validateAddress - Set this to 'true' if you want Sonar to submit the address for verification. This may cause issues with some addresses (e.g. PO Boxes)
+     * @return array
+     */
+    public function importNetworkSites($pathToImportFile, $validateAddress = false)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new NetworkSiteImporter();
+        return $importer->import($pathToImportFile,$validateAddress);
     }
 
     /**

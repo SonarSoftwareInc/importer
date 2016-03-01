@@ -92,7 +92,10 @@ To import account secondary addresses, call the function **importAccountSecondar
 
 An account secondary address is any non-physical address. The only available built in type is a mailing address, but you can also create additional types.
 
-`$results = $importer->importAccountSecondaryAddresses("/home/simon/accountSecondaryAddresses.csv");`
+The second value passed into the import function is a boolean, signifying whether or not you want Sonar to validate the address. This can result in the address being modified if the validation process returns a different format. It will also attempt to geocode the address if
+you omit a latitude/longitude.
+
+`$results = $importer->importAccountSecondaryAddresses("/home/simon/accountSecondaryAddresses.csv",false);`
 
 ### Importing pre-tokenized credit cards
 To import pre-tokenized credit cards, call the function **importTokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with tokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the tokenized credit card template in the templates folder.
@@ -121,7 +124,6 @@ If you currently store tokenized eCheck accounts, you should use this function t
 
 `$results = $importer->importTokenizedBankAccounts("/home/simon/tokenizedBankAccounts.csv");`
 
-
 ### Importing untokenized bank accounts
 To import untokenized bank accounts, call the function **importUntokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with untokenized bank account data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized bank account template in the templates folder.
 
@@ -142,3 +144,12 @@ This function is used to upload files relevant to your accounts to the account f
 To import account notes, call the function **importAccountNotes** on the Importer class, passing in the path to a properly formatted CSV file with account note data. You will need to manipulate your data into the appropriate format before importing, by using the account notes template in the templates folder.
 
 `$results = $importer->importAccountNotes("/home/simon/accountNotes.csv");`
+
+### Importing network sites
+To import network sites, call the function **importNetworkSites** on the Importer class, passing in the path to a properly formatted CSV file with network site data. You will need to manipulate your data into the appropriate format before importing, by using the network site template in the templates folder.
+
+I strongly recommend you include a valid latitude/longitude in the import, as if your network site is not on a major street, trying to validate the address is likely to result in incorrect map placement. The second value passed into the import
+function is a boolean, signifying whether or not you want Sonar to validate the address. This can result in the address being modified if the validation process returns a different format. It will also attempt to geocode the address if
+you omit a latitude/longitude.
+
+`$results = $importer->importNetworkSites("/home/simon/networkSites.csv",false);`

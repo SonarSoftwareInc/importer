@@ -6,7 +6,7 @@ use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 
-class AccountSecondaryAddressImporter
+class NetworkSiteImporter
 {
     private $uri;
     private $username;
@@ -55,10 +55,10 @@ class AccountSecondaryAddressImporter
                 mkdir(__DIR__ . "/../log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_failures");
+            $failureLogName = tempnam(__DIR__ . "/../log_output","network_site_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output","account_secondary_address_import_successes");
+            $successLogName = tempnam(__DIR__ . "/../log_output","network_site_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
@@ -72,7 +72,7 @@ class AccountSecondaryAddressImporter
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $row++;
                 try {
-                    $this->createSecondaryAddress($data, $validateAddress);
+                    $this->createNetworkSite($data, $validateAddress);
                 }
                 catch (ClientException $e)
                 {
@@ -91,7 +91,7 @@ class AccountSecondaryAddressImporter
                 }
 
                 $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+                fwrite($successLog,"Row $row succeeded for network site " . trim($data[0]) . "\n");
             }
         }
         else
@@ -106,12 +106,11 @@ class AccountSecondaryAddressImporter
     }
 
     /**
-     * Validate all the data in the import file.
      * @param $pathToImportFile
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1,2,4,5,7,8 ];
+        $requiredColumns = [ 0,6 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -120,8 +119,14 @@ class AccountSecondaryAddressImporter
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the account secondary address import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                        throw new InvalidArgumentException("In the network site import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
+                }
+
+                if ((!trim($data[1]) || !trim($data[3]) || !trim($data[4]) || !trim($data[5])) && (!trim($data[7]) || !trim($data[8])))
+                {
+                    print_r($data);
+                    throw new InvalidArgumentException("You must provide either an address or a latitude/longitude. Both are missing on row $row.");
                 }
             }
         }
@@ -140,23 +145,44 @@ class AccountSecondaryAddressImporter
      */
     private function buildPayload($data, $validateAddress)
     {
-        $unformattedAddress = [
-            'line1' => trim($data[2]),
-            'line2' => trim($data[3]),
-            'city' => trim($data[4]),
-            'state' => trim($data[5]),
-            'county' => trim($data[6]),
-            'zip' => trim($data[7]),
-            'country' => trim($data[8]),
-            'latitude' => trim($data[9]),
-            'longitude' => trim($data[10]),
+        $payload = [
+            'name' => $data[0],
+            'country' => $data[6],
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress);
+        if (trim($data[7]) && trim($data[8]))
+        {
+            $payload['latitude'] = $data[7];
+            $payload['longitude'] = $data[8];
+        }
 
-        $formattedAddress['address_type_id'] = (int)trim($data[1]);
+        $unformattedAddress = [
+            'line1' => trim($data[1]),
+            'line2' => trim($data[2]),
+            'city' => trim($data[3]),
+            'state' => trim($data[4]),
+            'zip' => trim($data[5]),
+            'country' => trim($data[6]),
+            'latitude' => trim($data[7]),
+            'longitude' => trim($data[8]),
+        ];
 
-        return $formattedAddress;
+        if ($unformattedAddress['line1'] && $unformattedAddress['city'] && $unformattedAddress['state'])
+        {
+            $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress);
+            $payload['line1'] = $formattedAddress['line1'];
+            $payload['line2'] = $formattedAddress['line2'];
+            $payload['city'] = $formattedAddress['city'];
+            $payload['state'] = $formattedAddress['state'];
+            $payload['zip'] = $formattedAddress['zip'];
+            if (!array_key_exists("latitude",$payload))
+            {
+                $payload['latitude'] = $formattedAddress['latitude'];
+                $payload['longitude'] = $formattedAddress['longitude'];
+            }
+        }
+
+        return $payload;
     }
 
     /**
@@ -164,12 +190,11 @@ class AccountSecondaryAddressImporter
      * @param $validateAddress
      * @return mixed
      */
-    private function createSecondaryAddress($data, $validateAddress)
+    private function createNetworkSite($data, $validateAddress)
     {
         $payload = $this->buildPayload($data, $validateAddress);
-        $accountID = (int)trim($data[0]);
 
-        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/addresses", [
+        return $this->client->post($this->uri . "/api/v1/network/network_sites", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,

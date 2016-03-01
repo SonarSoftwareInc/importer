@@ -66,7 +66,7 @@ class AddressFormatter
     /**
      * Return a formatted address for use in the API import. Throws an InvalidArgumentException if something is invalid in the address.
      * @param $unformattedAddress
-     * @param bool $validate - Whether or not to try to convert the address to a mappable format. Should be set to 'false' for mailing addresses.
+     * @param bool $validate - Whether or not to try to convert the address to a mappable format. Should be set to false if you don't want the potential of the address being modified.
      * @return array
      */
     public function formatAddress($unformattedAddress, $validate = true)
