@@ -137,7 +137,7 @@ class UntokenizedCreditCardImporter
         return [
             'type' => 'credit card',
             'expiration_month' => trim($data[1]),
-            'expiration_year' => trim($data[2]),
+            'expiration_year' => strlen(trim($data[2])) > 2 ? trim($data[2]) : "20" . trim($data[2]),
             'account_number' => (int)trim($data[3]),
             'name_on_account' => trim($data[4]),
             'auto' => (boolean)$data[5],
