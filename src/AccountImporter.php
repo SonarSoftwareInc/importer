@@ -385,7 +385,7 @@ class AccountImporter
      * @param bool $delaySubAccounts
      * @return bool
      */
-    private function createAccount($data, $creditAdjustmentID, $debitAdjustmentID, $delaySubAccounts = true)
+    private function createAccount($data, $debitAdjustmentID, $creditAdjustmentID, $delaySubAccounts = true)
     {
         $payload = $this->buildPayload($data);
         if (array_key_exists("sub_accounts",$payload) && $delaySubAccounts === true)
