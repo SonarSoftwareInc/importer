@@ -20,7 +20,8 @@ formatting tab have notes with more in-depth descriptions.
 1. Before importing, we also **strongly recommend** you disable 'Daily Billing' under Financial > Billing > Configuration. You don't want accounts getting billed until your import is complete and verified!
 2. Create all needed services, taxes, address types, groups, statuses, etc. The intent of the importer is to import mass data - accounts, contacts, credit cards, etc. Parts of the importer will require you to reference the status and type of an account, or the type of an address. These will need to be created before you begin. I'd strongly recommend creating a small script to build these items via the API, so that you can easily reset your system after a failed import if needed.
 3. Setup your payment processor information in Sonar, if you are importing payment methods. You will need a functioning payment processor to import credit cards or eCheck accounts.
-4. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
+4. Setup your billing defaults under Financial > Billing > Defaults. Having these set to correct values prior to import will help avoid issues with bill dates being set too far in the future.
+5. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
 
 
 ###Setup
