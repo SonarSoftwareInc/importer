@@ -206,7 +206,7 @@ class Importer
     }
 
     /**
-     * @param $pathToImportFile - Input the full path to the account notes CSV file.
+     * @param $pathToImportFile - Input the full path to the network sites CSV file.
      * @param bool $validateAddress - Set this to 'true' if you want Sonar to submit the address for verification. This may cause issues with some addresses (e.g. PO Boxes)
      * @return array
      */
@@ -218,6 +218,20 @@ class Importer
 
         $importer = new NetworkSiteImporter();
         return $importer->import($pathToImportFile,$validateAddress);
+    }
+
+    /**
+     * @param $pathToImportFile - Input the full path to the inventory items CSV file.
+     * @return array
+     */
+    public function importInventoryItems($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.8");
+
+        $importer = new InventoryImporter();
+        return $importer->import($pathToImportFile);
     }
 
     /**

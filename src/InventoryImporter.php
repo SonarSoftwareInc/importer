@@ -72,13 +72,28 @@ class InventoryImporter
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $row++;
                 try {
-                    $formattedItem = $this->formatRow($data);
+                    $this->importItem($data);
                 }
                 catch (ClientException $e)
                 {
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $parsedFailures = [];
+                    foreach ($body->error->message as $singleMessage)
+                    {
+                        if (is_object($singleMessage))
+                        {
+                            foreach ($singleMessage as $innerMessage)
+                            {
+                                array_push($parsedFailures,$innerMessage);
+                            }
+                        }
+                        else
+                        {
+                            array_push($parsedFailures,$singleMessage);
+                        }
+                    }
+                    $returnMessage = implode(", ",$parsedFailures);
                     fwrite($failureLog,"Row $row failed: $returnMessage\n");
                     $returnData['failures'] += 1;
                     continue;
@@ -101,15 +116,6 @@ class InventoryImporter
             throw new InvalidArgumentException("File could not be opened.");
         }
 
-        $json = [];
-        $json["assignee_id"] = (int)trim($assigneeID);
-        $json["assignee_type"] = trim($assigneeType);
-        $json["model_id"] = trim($modelID);
-        $condition = in_array($condition,['new','used']) ? $condition : 'new';
-        $json['condition'] = strtolower(trim($condition));
-        $json['quantity'] = (int)trim($quantity);
-        $json['purchase_price'] = (float)trim($purchasePrice);
-
         fclose($failureLog);
         fclose($successLog);
 
@@ -122,15 +128,20 @@ class InventoryImporter
      */
     private function validateImportFile($pathToImportFile)
     {
-
+        $requiredColumns = [ 0,1,2 ];
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $row = 0;
             while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
                 $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the account import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
+                }
                 if ((count($data) % 2) !== 0)
                 {
-                    throw new InvalidArgumentException("There is an odd number of columns on row " . ($row+1) . ".");
+                    throw new InvalidArgumentException("There is an odd number of columns on row " . ($row+1) . ", which is not valid.");
                 }
             }
         }
@@ -166,7 +177,7 @@ class InventoryImporter
         $currentPage = $body->paginator->current_page;
         $totalPages = $body->paginator->total_pages;
 
-        while ($currentPage <= $totalPages)
+        while ($currentPage < $totalPages)
         {
             $nextPage = $currentPage+1;
             $response = $this->client->get($this->uri . "/api/v1/inventory/models?limit=100&page=$nextPage", [
@@ -216,23 +227,22 @@ class InventoryImporter
     }
 
     /**
-     * Build the representation of the inventory item to be submitted to the API
+     * Build the API payload
      * @param $row
      * @return array
-     * @internal param $handle
      */
-    private function formatRow($row)
+    private function buildPayload($row)
     {
         $item = [];
 
-        if (!array_key_exists(strtolower(trim($row[2])),$this->modelIDsByName))
+        if (!array_key_exists(strtolower(trim($row[2])),$this->modelNames))
         {
             throw new InvalidArgumentException("The model " . trim($row[2]) . " does not exist in Sonar.");
         }
 
         $item["assignee_id"] = $row[0];
         $item["assignee_type"] = $row[1];
-        $item["model_id"] = $this->modelIDsByName[strtolower(trim($row[2]))];
+        $item["model_id"] = $this->modelNames[strtolower(trim($row[2]))];
         if (array_key_exists(3,$row))
         {
             if (in_array($row[3],['new','used']))
@@ -255,20 +265,50 @@ class InventoryImporter
             }
         }
 
+        $fields = [];
         $individualList = [];
 
         for ($i = 6; $i <= count($row); $i++)
         {
-            if ($i % 2)
+            if (trim($row[$i]) == '') {
+                continue;
+            }
+            if ($i % 2 === 0)
             {
                 //Field Name
-            }
-            else
-            {
-                //Field Value
+                $name = $row[$i];
+                $value = $row[$i+1];
+                $fields[$this->fieldNames[strtolower(trim($name))]] = trim($value);
             }
         }
 
+        $individualList[] = ["fields" => $fields];
+        $item['individualList'] = $individualList;
+
         return $item;
+    }
+
+    /**
+     * Import the inventory item
+     * @param $row
+     * @return bool
+     * @internal param $handle
+     */
+    private function importItem($row)
+    {
+        $payload = $this->buildPayload($row);
+        $response = $this->client->post($this->uri . "/api/v1/inventory/items", [
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ],
+            'json' => $payload,
+        ]);
+
+        return true;
     }
 }
