@@ -37,6 +37,7 @@ class NoteImporter
 
     /**
      * @param $pathToImportFile
+     * @param $entity
      * @return array
      */
     public function import($pathToImportFile, $entity)
