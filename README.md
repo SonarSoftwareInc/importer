@@ -11,7 +11,7 @@ This tool has been built and tested on Linux, specifically Ubuntu, although it i
 
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
-formatting tab have notes with more in-depth descriptions.
+formatting tab have notes with more in-depth descriptions. When exporting the CSVs, they should be comma delimited, and strings should be wrapped in double quotes.
 
 ##Using the importer
 
