@@ -154,8 +154,8 @@ class AddressFormatter
                     ],
                 ]);
 
-                $countyArray = (array)json_decode($counties->getBody());
-                $this->counties[$unformattedAddress['state']] = $countyArray;
+                $countyArray = json_decode($counties->getBody());
+                $this->counties[$unformattedAddress['state']] = (array)$countyArray->data;
             }
 
             if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
