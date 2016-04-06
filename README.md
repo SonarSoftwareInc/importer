@@ -154,3 +154,10 @@ function is a boolean, signifying whether or not you want Sonar to validate the 
 you omit a latitude/longitude.
 
 `$results = $importer->importNetworkSites("/home/simon/networkSites.csv",false);`
+
+### Importing inventory items
+To import inventory items, call the function **importInventoryItems** on the Importer class, passing in the path to a properly formatted CSV file with inventory item data. You will need to manipulate your data into the appropriate format before importing, by using the inventory item template in the templates folder.
+
+If you wish to import IP assignments for customer/network devices, you must import the inventory items first. You will be able to reference MAC addresses on inventory items in the IP import importer.
+
+`$results = $importer->importInventoryItems("/home/simon/inventoryItems.csv");`
