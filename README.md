@@ -161,3 +161,10 @@ To import inventory items, call the function **importInventoryItems** on the Imp
 If you wish to import IP assignments for customer/network devices, you must import the inventory items first. You will be able to reference MAC addresses on inventory items in the IP import importer.
 
 `$results = $importer->importInventoryItems("/home/simon/inventoryItems.csv");`
+
+### Importing MAC address associated account IPs
+To import single IP addresses that are associated with MAC addresses on a customer account, call the function **importAccountIPsWithMacAddresses** on the Importer class, passing in the path to a properly formatted CSV file with MAC associated IP data. You will need to manipulate your data into the appropriate format before importing, by using the account MAC IP assignment template in the templates folder.
+
+If you wish to import IP assignments for customer devices, you must import the inventory items first. If you run this import before importing inventory, all of the items will be added as non-inventoried MAC addresses.
+
+`$results = $importer->importAccountIPsWithMacAddresses("/home/simon/ipsWithMacAddresses.csv");`

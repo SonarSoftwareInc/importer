@@ -134,7 +134,7 @@ class InventoryImporter
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the account import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                        throw new InvalidArgumentException("In the inventory import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
                 }
                 if ((count($data) % 2) !== 0)
