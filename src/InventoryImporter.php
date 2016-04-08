@@ -104,9 +104,7 @@ class InventoryImporter
                     $returnData['failures'] += 1;
                     continue;
                 }
-
-                array_push($inventoryItemsToImport, $formattedItem);
-
+                
                 $returnData['successes'] += 1;
                 fwrite($successLog,"Row $row succeeded for ID " . trim($data[0]) . "\n");
             }
