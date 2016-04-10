@@ -327,6 +327,10 @@ class AccountIpAssignmentImporter
         return $macFieldIDs;
     }
 
+    /**
+     * @param $row
+     * @return array
+     */
     private function buildPayload($row)
     {
         $payload = [];

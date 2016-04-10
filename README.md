@@ -168,3 +168,10 @@ To import single IP addresses that are associated with MAC addresses on a custom
 If you wish to import IP assignments for customer devices, you must import the inventory items first. If you run this import before importing inventory, all of the items will be added as non-inventoried MAC addresses.
 
 `$results = $importer->importAccountIPsWithMacAddresses("/home/simon/ipsWithMacAddresses.csv");`
+
+### Importing network site IPs
+To import IP addresses or subnets onto a network site, call the function **importNetworkSiteIPs** on the Importer class, passing in the path to a properly formatted CSV file with network site IP data. You will need to manipulate your data into the appropriate format before importing, by using the network site IP assignments in the templates folder.
+
+Importing IPs onto network sites does not offer any automation or monitoring capabilities - it is simply a way to mark an IP address as used so it is not taken for another assignment. This will be expanded on in the future.
+
+`$results = $importer->importNetworkSiteIPs("/home/simon/networkSiteIPs.csv");`
