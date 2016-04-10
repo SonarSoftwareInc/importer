@@ -79,6 +79,7 @@ class InventoryImporter
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $parsedFailures = [];
+                    if (is_object($body->error))
                     foreach ($body->error->message as $singleMessage)
                     {
                         if (is_object($singleMessage))
@@ -220,7 +221,7 @@ class InventoryImporter
         $body = json_decode($response->getBody());
         foreach ($body->data as $fieldDatum)
         {
-            $this->fieldNames[strtolower(trim($fieldDatum->name))] = (int)trim($fieldDatum->id);
+            $this->fieldNames[$datum->id][strtolower(trim($fieldDatum->name))] = (int)trim($fieldDatum->id);
         }
     }
 
@@ -276,7 +277,11 @@ class InventoryImporter
                 //Field Name
                 $name = $row[$i];
                 $value = $row[$i+1];
-                $fields[$this->fieldNames[strtolower(trim($name))]] = trim($value);
+                if (!array_key_exists(strtolower(trim($name)),$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]]))
+                {
+                    throw new InvalidArgumentException("The field " . trim($name) . " does not exist for model " . trim($row[2]));
+                }
+                $fields[$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]][strtolower(trim($name))]] = trim($value);
             }
         }
 
