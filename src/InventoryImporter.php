@@ -91,7 +91,7 @@ class InventoryImporter
                         }
                         else
                         {
-                            array_push($parsedFailures,$singleMessage);
+                            array_push($parsedFailures,$body->error->message);
                         }
                     }
                     $returnMessage = implode(", ",$parsedFailures);
