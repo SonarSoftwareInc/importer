@@ -7,7 +7,7 @@ use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
 
-class AccountIpAssignmentImporter
+class NetworkIPMacAssignmentImporter
 {
     private $uri;
     private $username;
@@ -55,10 +55,10 @@ class AccountIpAssignmentImporter
                 mkdir(__DIR__ . "/../log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output", "account_ip_mac_assignment_import_failures");
+            $failureLogName = tempnam(__DIR__ . "/../log_output", "network_ip_mac_assignment_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output","account_ip_mac_assignment_import_successes");
+            $successLogName = tempnam(__DIR__ . "/../log_output","network_ip_mac_assignment_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
@@ -342,9 +342,7 @@ class AccountIpAssignmentImporter
         }
         else
         {
-            //This is non-inventoried MAC
-            $payload['assigned_entity'] = "non_inventoried_mac_addresses";
-            $payload['non_inventoried_mac_address'] = $mac;
+            throw new InvalidArgumentException("The MAC address $mac does not exist in Sonar.");
         }
 
         if (array_key_exists(3,$row))
@@ -388,7 +386,7 @@ class AccountIpAssignmentImporter
     private function importIpAssignment($row)
     {
         $payload = $this->buildPayload($row);
-        $response = $this->client->post($this->uri . "/api/v1/accounts/" . trim($row[0]) . "/ip_assignments", [
+        $response = $this->client->post($this->uri . "/api/v1/network/network_sites/" . trim($row[0]) . "/ip_assignments", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,

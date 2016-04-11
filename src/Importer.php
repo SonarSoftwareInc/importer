@@ -249,6 +249,20 @@ class Importer
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the network IPs associated with MACs CSV file.
+     * @return array
+     */
+    public function importNetworkSiteIPsWithMacAddresses($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.4.2");
+
+        $importer = new NetworkIPMacAssignmentImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * @param $pathToImportFile - Input the full path to the network IP assignment CSV file.
      * @return array
      */
