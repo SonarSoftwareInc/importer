@@ -190,12 +190,10 @@ class AccountIpAssignmentImporter
             {
                 if (in_array($field->field_id,$macFieldIDs))
                 {
-                    array_push($this->existingMacs,[
-                        $field->data => [
-                            'field_id' => $field->field_id,
-                            'inventory_item_id' => $datum->assignee_id,
-                        ]
-                    ]);
+                    $this->existingMacs[$field->data] = [
+                        'field_id' => $field->field_id,
+                        'inventory_item_id' => $datum->id,
+                    ];
                 }
             }
         }
@@ -223,12 +221,10 @@ class AccountIpAssignmentImporter
                 {
                     if (in_array($field->field_id,$macFieldIDs))
                     {
-                        array_push($this->existingMacs,[
-                            $field->data => [
-                                'field_id' => $field->field_id,
-                                'inventory_item_id' => $datum->id,
-                            ]
-                        ]);
+                        $this->existingMacs[$field->data] = [
+                            'field_id' => $field->field_id,
+                            'inventory_item_id' => $datum->id,
+                        ];
                     }
                 }
             }
