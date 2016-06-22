@@ -136,11 +136,6 @@ class AddressFormatter
 
         if ($unformattedAddress['country'] == "US")
         {
-            if (!$unformattedAddress['county'])
-            {
-                throw new InvalidArgumentException("The address failed to validate, and a county is required for addresses in the US.");
-            }
-
             if (!array_key_exists($unformattedAddress['state'],$this->counties))
             {
                 $counties = $this->client->get($this->uri . "/api/v1/_data/counties/{$unformattedAddress['state']}", [
@@ -156,11 +151,13 @@ class AddressFormatter
 
                 $countyArray = json_decode($counties->getBody());
                 $this->counties[$unformattedAddress['state']] = (array)$countyArray->data;
-            }
-
-            if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
-            {
-                throw new InvalidArgumentException("The county is not a valid county for the state.");
+                if (count($this->counties[$unformattedAddress['state']]) > 0)
+                {
+                    if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
+                    {
+                        throw new InvalidArgumentException("The county is not a valid county for the state.");
+                    }
+                }
             }
         }
 
