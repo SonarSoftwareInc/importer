@@ -273,7 +273,7 @@ class AccountImporter
         {
             $payload['phone_numbers'] = $phoneNumbers;
         }
-
+        
         return $payload;
     }
 

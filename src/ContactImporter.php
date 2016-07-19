@@ -117,6 +117,11 @@ class ContactImporter
                     if (trim($data[$colNumber]) == '') {
                         throw new InvalidArgumentException("In the contact import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
+
+                    if ((trim($data[10]) && !trim($data[11])) || !trim($data[10]) && trim($data[11]))
+                    {
+                        throw new InvalidArgumentException("In the contact import, row $row has either a username or a password, but not both. If one is supplied, the other must be also.");
+                    }
                 }
             }
         }
@@ -191,6 +196,12 @@ class ContactImporter
         if (count($phoneNumbers) > 0)
         {
             $payload['phone_numbers'] = $phoneNumbers;
+        }
+
+        if (trim($data[10]))
+        {
+            $payload['username'] = trim($data[10]);
+            $payload['password'] = trim($data[11]);
         }
 
         $payload['primary'] = false;
