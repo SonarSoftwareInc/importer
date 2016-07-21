@@ -81,13 +81,13 @@ class AddressValidator
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row {$this->row} failed: $returnMessage\n");
+                    fwrite($failureLog,"Row {$this->row} failed: $returnMessage | " . implode(",",$data) . "\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fwrite($failureLog,"Row {$this->row} failed: {$e->getMessage()}\n");
+                    fwrite($failureLog,"Row {$this->row} failed: {$e->getMessage()} | " . implode(",",$data) . "\n");
                     $returnData['failures'] += 1;
                     continue;
                 }
