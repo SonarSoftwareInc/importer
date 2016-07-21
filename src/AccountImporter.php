@@ -215,11 +215,11 @@ class AccountImporter
         }
         if (trim($data[6]))
         {
-            $carbon = Carbon::createFromFormat("Y-m-d",$data[6]);
+            $carbon = new Carbon($data[6]);
             $now = Carbon::now();
             if ($carbon->gt($now))
             {
-                $payload['next_bill_date'] = trim($data[6]);
+                $payload['next_bill_date'] = trim($carbon->toDateString());
             }
         }
         if (trim($data[17]))

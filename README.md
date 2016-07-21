@@ -22,7 +22,7 @@ formatting tab have notes with more in-depth descriptions. When exporting the CS
 3. Setup your payment processor information in Sonar, if you are importing payment methods. You will need a functioning payment processor to import credit cards or eCheck accounts.
 4. Setup your billing defaults under Financial > Billing > Defaults. Having these set to correct values prior to import will help avoid issues with bill dates being set too far in the future.
 5. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
-
+6. Use the address validator to validate your accounts CSV before import.
 
 ###Setup
 To setup the importer for use, create a .env file in the src directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
