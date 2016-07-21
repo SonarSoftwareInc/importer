@@ -198,7 +198,7 @@ class AccountImporter
             'longitude' => trim($data[15]),
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
+        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, false);
 
         $payload = array_merge($payload,$formattedAddress);
 

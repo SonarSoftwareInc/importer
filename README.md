@@ -53,6 +53,25 @@ The importer will return an array in the following format:
 
 You will receive an individual output for each function that is called. For example, if you import accounts, contacts and credit cards, you will have three sets of log files, one for each import.
 
+###Validating account addresses
+Before importing your accounts, it is important that the addresses are validated. Sonar requires well formatted addresses, with two character country codes (and counties, for US addresses.) You can feed your account import document into the address validator prior to running the import. This will attempt to validate each address, return failures for any bad addresses, and return a new CSV file with cleaned up addresses for any that can be validated.
+
+This function will return an array in the following format:
+
+`[
+     'validated_file' => '/tmp/validatedFile12345',
+     'successes' => 100,
+     'failures' => 5,
+     'failure_log_name' => $failureLogName,
+     'success_log_name' => $successLogName
+]`
+
+Where `validated_file` is the new CSV with the well formatted addresses. The failure log will contain details on any failed rows. Rows that could not be validated will **not be included in the validated file!**
+
+To validate addresses, instance the `AddressValidator` class and call `validate` on it with the path to your account import.
+
+`$results = $addressValidator->validate("/home/simon/accounts.csv");`
+
 ###Importing accounts
 To import accounts, call the function **importAccounts** on the Importer class, passing in the path to a properly formatted CSV file with account data. You will need to manipulate your data into the appropriate format before importing, by using the account template in the templates folder.
 
