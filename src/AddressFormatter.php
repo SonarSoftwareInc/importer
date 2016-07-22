@@ -163,12 +163,13 @@ class AddressFormatter
 
                 $countiesObject = json_decode($counties->getBody());
                 $this->counties[$unformattedAddress['state']] = (array)$countiesObject->data;
-                if (count($this->counties[$unformattedAddress['state']]) > 0)
+            }
+
+            if (count($this->counties[$unformattedAddress['state']]) > 0)
+            {
+                if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
                 {
-                    if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
-                    {
-                        throw new InvalidArgumentException("The county is not a valid county for the state.");
-                    }
+                    throw new InvalidArgumentException("The county is not a valid county for the state.");
                 }
             }
         }

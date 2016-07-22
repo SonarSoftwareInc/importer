@@ -115,13 +115,13 @@ class AccountImporter
                         $response = $e->getResponse();
                         $body = json_decode($response->getBody());
                         $returnMessage = implode(", ",(array)$body->error->message);
-                        fwrite($failureLog,"Row $row failed: $returnMessage\n");
+                        fwrite($failureLog,implode(",",$data) . ",$returnMessage\n");
                         $returnData['failures'] += 1;
                         continue;
                     }
                     catch (Exception $e)
                     {
-                        fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
+                        fwrite($failureLog,implode(",",$data) . ",{$e->getMessage()}\n");
                         $returnData['failures'] += 1;
                         continue;
                     }
