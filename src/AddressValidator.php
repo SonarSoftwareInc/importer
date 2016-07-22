@@ -117,14 +117,10 @@ class AddressValidator
     {
         $unformattedAddress = [
             'line1' => trim($data[7]),
-            'line2' => trim($data[8]),
             'city' => trim($data[9]),
             'state' => trim($data[10]),
-            'county' => trim($data[11]),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
-            'latitude' => trim($data[14]),
-            'longitude' => trim($data[15]),
         ];
 
         $validatedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
