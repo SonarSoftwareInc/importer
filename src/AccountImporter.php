@@ -25,7 +25,7 @@ class AccountImporter
     public function __construct()
     {
         $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->load();
+        $dotenv->overload();
         $dotenv->required(
             [
                 'URI',

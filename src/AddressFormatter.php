@@ -26,7 +26,7 @@ class AddressFormatter
     public function __construct()
     {
         $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->load();
+        $dotenv->overload();
         $dotenv->required(
             [
                 'URI',
@@ -141,14 +141,14 @@ class AddressFormatter
             $this->subDivisions[$unformattedAddress['country']] = (array)$subDivisionObject->data;
         }
 
-        if (!array_key_exists($unformattedAddress['state'],$this->subDivisions[$unformattedAddress['country']]))
+        if (!array_key_exists(trim($unformattedAddress['state']),$this->subDivisions[$unformattedAddress['country']]))
         {
             throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
         }
 
-        if ($unformattedAddress['country'] == "US")
+        if (trim($unformattedAddress['country']) == "US")
         {
-            if (!array_key_exists($unformattedAddress['state'],$this->counties))
+            if (!array_key_exists(trim($unformattedAddress['state']),$this->counties))
             {
                 $counties = $this->client->get($this->uri . "/api/v1/_data/counties/{$unformattedAddress['state']}", [
                     'headers' => [
