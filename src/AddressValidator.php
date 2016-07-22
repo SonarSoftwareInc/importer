@@ -119,6 +119,7 @@ class AddressValidator
             'line1' => trim($data[7]),
             'city' => trim($data[9]),
             'state' => trim($data[10]),
+            'county' => trim($data[11]),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
         ];

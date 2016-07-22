@@ -78,6 +78,13 @@ class AddressFormatter
 
         if ($validate === true)
         {
+            //Remove the county from unformatted address so we can correct it if it's off
+            $unformattedAddressMinusCounty = $unformattedAddress;
+            if (array_key_exists("county",$unformattedAddressMinusCounty))
+            {
+                unset($unformattedAddressMinusCounty['county']);
+            }
+
             try {
                 $validatedAddressResponse = $this->client->post($this->uri . "/api/v1/_data/validate_address", [
                     'headers' => [
@@ -88,7 +95,7 @@ class AddressFormatter
                         $this->username,
                         $this->password,
                     ],
-                    'json' => $unformattedAddress,
+                    'json' => $unformattedAddressMinusCounty,
                 ]);
 
                 $address = (array)json_decode($validatedAddressResponse->getBody())->data;
@@ -111,6 +118,10 @@ class AddressFormatter
         }
     }
 
+    /**
+     * @param $unformattedAddress
+     * @return mixed
+     */
     private function doChecksOnUnvalidatedAddress($unformattedAddress)
     {
         if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
@@ -150,8 +161,8 @@ class AddressFormatter
                     ],
                 ]);
 
-                $countyArray = json_decode($counties->getBody());
-                $this->counties[$unformattedAddress['state']] = (array)$countyArray->data;
+                $countiesObject = json_decode($counties->getBody());
+                $this->counties[$unformattedAddress['state']] = (array)$countiesObject->data;
                 if (count($this->counties[$unformattedAddress['state']]) > 0)
                 {
                     if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
