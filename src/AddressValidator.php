@@ -132,8 +132,8 @@ class AddressValidator
         $data[11] = array_key_exists("county",$validatedAddress) ? $validatedAddress['county'] : null;
         $data[12] = $validatedAddress['zip'];
         $data[13] = $validatedAddress['country'];
-        $data[14] = $validatedAddress['latitude'];
-        $data[15] = $validatedAddress['longitude'];
+        $data[14] = array_key_exists("latitude",$validatedAddress) ? $validatedAddress['latitude'] : null;
+        $data[15] = array_key_exists("longitude",$validatedAddress) ? $validatedAddress['longitude'] : null;
 
         return $data;
     }
