@@ -47,7 +47,7 @@ class AddressValidator
     public function validate($pathToImportFile)
     {
         if (($handle = fopen($pathToImportFile, "r")) !== FALSE) {
-            $tempFile = tempnam(__DIR__,"validatedAddresses");
+            $tempFile = tempnam(__DIR__ . "/../","validatedAddresses");
             $tempHandle = fopen($tempFile, "w");
 
             $this->validateImportFile($pathToImportFile);
