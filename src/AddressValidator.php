@@ -129,10 +129,10 @@ class AddressValidator
 
         $validatedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
         $data[7] = $validatedAddress['line1'];
-        $data[8] = $validatedAddress['line2'];
+        $data[8] = array_key_exists("line2",$validatedAddress) ? $validatedAddress['line2'] : null;
         $data[9] = $validatedAddress['city'];
         $data[10] = $validatedAddress['state'];
-        $data[11] = $validatedAddress['county'];
+        $data[11] = array_key_exists("county",$validatedAddress) ? $validatedAddress['county'] : null;
         $data[12] = $validatedAddress['zip'];
         $data[13] = $validatedAddress['country'];
         $data[14] = $validatedAddress['latitude'];
