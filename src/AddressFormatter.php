@@ -92,10 +92,11 @@ class AddressFormatter
                 ]);
 
                 $address = (array)json_decode($validatedAddressResponse->getBody())->data;
-                if ($unformattedAddress['latitude'] && $unformattedAddress['longitude'])
+                if (array_key_exists("latitude",$unformattedAddress) && array_key_exists("longitude",$unformattedAddress))
                 {
-                    $address['latitude'] = $unformattedAddress['latitude'];
-                    $address['longitude'] = $unformattedAddress['longitude'];
+
+                    $address['latitude'] = trim($unformattedAddress['latitude']) != '' ? $unformattedAddress['latitude'] : $address['latitude'];
+                    $address['longitude'] = trim($unformattedAddress['longitude']) != '' ? $unformattedAddress['longitude'] : $address['longitude'];
                 }
                 return $address;
             }
