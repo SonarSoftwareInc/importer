@@ -79,13 +79,13 @@ class NetworkSiteImporter
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,implode(",",$data) . ",$returnMessage\n");
+                    fputcsv($failureLog,array_merge($data,$returnMessage));
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fwrite($failureLog,implode(",",$data) . ",{$e->getMessage()}\n");
+                    fputcsv($failureLog,array_merge($data,$e->getMessage()));
                     $returnData['failures'] += 1;
                     continue;
                 }
