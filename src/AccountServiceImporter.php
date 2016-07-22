@@ -52,15 +52,15 @@ class AccountServiceImporter
             $this->loadServiceData();
             $this->validateImportFile($pathToImportFile);
 
-            if (!file_exists(__DIR__ . "/../log_output"))
+            if (!file_exists(getcwd() . "/log_output"))
             {
-                mkdir(__DIR__ . "/../log_output");
+                mkdir(getcwd() . "/log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output","account_service_import_failures");
+            $failureLogName = tempnam(getcwd() . "/log_output","account_service_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output","account_service_import_successes");
+            $successLogName = tempnam(getcwd() . "/log_output","account_service_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
