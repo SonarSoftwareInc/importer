@@ -243,28 +243,28 @@ class AccountImporter
         if (trim($data[20]))
         {
             $phoneNumbers['work'] = [
-                'number' => trim($data[20]),
+                'number' => trim(preg_replace("/[^0-9]/","",$data[20])),
                 'extension' => trim($data[21]),
             ];
         }
         if (trim($data[22]))
         {
             $phoneNumbers['home'] = [
-                'number' => trim($data[22]),
+                'number' => trim(preg_replace("/[^0-9]/","",$data[22])),
                 'extension' => null,
             ];
         }
         if (trim($data[23]))
         {
             $phoneNumbers['mobile'] = [
-                'number' => trim($data[23]),
+                'number' => trim(preg_replace("/[^0-9]/","",$data[23])),
                 'extension' => null,
             ];
         }
         if (trim($data[24]))
         {
             $phoneNumbers['fax'] = [
-                'number' => trim($data[24]),
+                'number' => trim(preg_replace("/[^0-9]/","",$data[24])),
                 'extension' => null,
             ];
         }
