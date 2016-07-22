@@ -70,6 +70,11 @@ Where `validated_file` is the new CSV with the well formatted addresses. The fai
 
 To validate addresses, instance the `AddressValidator` class and call `validate` on it with the path to your account import.
 
+Whichever addresses are rejected cannot be geocoded. You will have to fix these addresses by hand before importing them to Sonar. Go through each entry in the failure log, clean it up, and then add it to the validated list. You can then feed the validated list to the account importer.
+
+The requirement for addresses in Sonar is a line1 value, a city, a state, a zip/postal code, a country, and a county (if the address is in the US, and the state has counties.) You can get a list of valid counties from the Sonar API at `/api/v1/_data_/counties/{state}` where `{state}` is the two character state (e.g. WI, AZ.) If some addresses cannot validate,
+there is no point in running them through the validator repeatedly - fix them by hand, and move on to the account import. Bear in mind that any failures in the address validator will translate into failures in the account importer, so make sure you run through this step first!
+
 `$results = $addressValidator->validate("/home/simon/accounts.csv");`
 
 ###Importing accounts
