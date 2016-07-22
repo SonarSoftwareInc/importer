@@ -5,14 +5,10 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use Extenders\AccessesSonar;
 
-class AddressFormatter
+class AddressFormatter extends AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
-
     /**
      * Data stored to limit necessary queries
      */
@@ -25,22 +21,7 @@ class AddressFormatter
      */
     public function __construct()
     {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->overload();
-        $dotenv->required(
-            [
-                'URI',
-                'USERNAME',
-                'PASSWORD',
-            ]
-        );
-
-        $this->uri = getenv("URI");
-        $this->username = getenv("USERNAME");
-        $this->password = getenv("PASSWORD");
-
-        $this->client = new \GuzzleHttp\Client();
-
+        parent::__construct();
         $this->loadCountryData();
     }
 

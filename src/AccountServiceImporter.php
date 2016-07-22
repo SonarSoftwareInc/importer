@@ -5,42 +5,10 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use Extenders\AccessesSonar;
 
-class AccountServiceImporter
+class AccountServiceImporter extends AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
-
-    /**
-     * Services pulled from the API
-     * @var
-     */
-    private $services;
-
-    /**
-     * Importer constructor.
-     */
-    public function __construct()
-    {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->overload();
-        $dotenv->required(
-            [
-                'URI',
-                'USERNAME',
-                'PASSWORD',
-            ]
-        );
-
-        $this->uri = getenv("URI");
-        $this->username = getenv("USERNAME");
-        $this->password = getenv("PASSWORD");
-
-        $this->client = new \GuzzleHttp\Client();
-    }
-
     /**
      * @param $pathToImportFile
      * @return array

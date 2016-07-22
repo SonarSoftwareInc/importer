@@ -6,38 +6,12 @@ use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
+use Extenders\AccessesSonar;
 
-class InventoryImporter
+class InventoryImporter extends AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
-
     private $fieldNames = [];
     private $modelNames = [];
-
-    /**
-     * Importer constructor.
-     */
-    public function __construct()
-    {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->overload();
-        $dotenv->required(
-            [
-                'URI',
-                'USERNAME',
-                'PASSWORD',
-            ]
-        );
-
-        $this->uri = getenv("URI");
-        $this->username = getenv("USERNAME");
-        $this->password = getenv("PASSWORD");
-
-        $this->client = new \GuzzleHttp\Client();
-    }
 
     /**
      * @param $pathToImportFile

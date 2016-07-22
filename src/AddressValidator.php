@@ -6,36 +6,17 @@ use InvalidArgumentException;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
+use Extenders\AccessesSonar;
 
-class AddressValidator
+class AddressValidator extends AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
-
     private $row;
 
     private $addressFormatter;
 
     public function __construct()
     {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->overload();
-        $dotenv->required(
-            [
-                'URI',
-                'USERNAME',
-                'PASSWORD',
-            ]
-        );
-
-        $this->uri = getenv("URI");
-        $this->username = getenv("USERNAME");
-        $this->password = getenv("PASSWORD");
-
-        $this->client = new \GuzzleHttp\Client();
-
+        parent::__construct();
         $this->addressFormatter = new AddressFormatter();
     }
 

@@ -6,14 +6,10 @@ use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
+use Extenders\AccessesSonar;
 
-class AccountImporter
+class AccountImporter extends AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
-
     private $accountsWithSubAccounts = array();
     private $row;
 
@@ -24,22 +20,7 @@ class AccountImporter
      */
     public function __construct()
     {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
-        $dotenv->overload();
-        $dotenv->required(
-            [
-                'URI',
-                'USERNAME',
-                'PASSWORD',
-            ]
-        );
-
-        $this->uri = getenv("URI");
-        $this->username = getenv("USERNAME");
-        $this->password = getenv("PASSWORD");
-
-        $this->client = new \GuzzleHttp\Client();
-
+        parent::__construct();
         $this->addressFormatter = new AddressFormatter();
     }
 
