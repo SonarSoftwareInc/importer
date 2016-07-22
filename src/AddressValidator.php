@@ -56,10 +56,10 @@ class AddressValidator
                 mkdir(__DIR__ . "/../log_output");
             }
 
-            $failureLogName = tempnam(__DIR__ . "/../log_output", "account_import_failures");
+            $failureLogName = tempnam(__DIR__ . "/../log_output", "address_validator_failures");
             $failureLog = fopen($failureLogName, "w");
 
-            $successLogName = tempnam(__DIR__ . "/../log_output", "account_import_successes");
+            $successLogName = tempnam(__DIR__ . "/../log_output", "address_validator_successes");
             $successLog = fopen($successLogName, "w");
 
             $returnData = [
