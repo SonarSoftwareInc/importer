@@ -14,6 +14,7 @@ class AccountImporter extends AccessesSonar
     private $row;
 
     private $addressFormatter;
+    private $balanceImporter;
 
     /**
      * Importer constructor.
@@ -32,10 +33,11 @@ class AccountImporter extends AccessesSonar
      */
     public function import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
     {
+        $this->balanceImporter = new BalanceImporter($debitAdjustmentID, $creditAdjustmentID);
+
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $this->validateImportFile($pathToImportFile);
-            $this->validateServices($debitAdjustmentID, $creditAdjustmentID);
 
             $failureLogName = tempnam(getcwd() . "/log_output","account_import_failures");
             $failureLog = fopen($failureLogName,"w");
@@ -258,100 +260,18 @@ class AccountImporter extends AccessesSonar
      * @param $data
      * @return bool
      */
-    private function addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID)
+    private function addPriorBalanceIfRequired($data)
     {
         $id = (int)trim($data[0]);
 
         if (trim($data[25]))
         {
-            $priorBalance = number_format(trim((float)$data[25]),2,".","");
-            if ($priorBalance != 0)
-            {
-                if ($priorBalance > 0)
-                {
-                    $serviceID = $debitAdjustmentID;
-                }
-                else
-                {
-                    $serviceID = $creditAdjustmentID;
-                }
-
-                $response = $this->client->post($this->uri . "/api/v1/accounts/$id/services", [
-                    'headers' => [
-                        'Content-Type' => 'application/json; charset=UTF8',
-                        'timeout' => 30,
-                    ],
-                    'auth' => [
-                        $this->username,
-                        $this->password,
-                    ],
-                    'json' => [
-                        'service_id' => $serviceID,
-                        'prorate' => false,
-                        'amount' => abs($priorBalance)
-                    ]
-                ]);
-            }
+            $this->balanceImporter->updateBalance($id, (float)$data[25]);
         }
 
         return true;
     }
 
-    /**
-     * Validate that the service IDs are valid debit/credit adjustment services.
-     * @param $debitAdjustmentID
-     * @param $creditAdjustmentID
-     */
-    private function validateServices($debitAdjustmentID, $creditAdjustmentID)
-    {
-        try {
-            $response = $this->client->get($this->uri . "/api/v1/system/services/$debitAdjustmentID", [
-                'headers' => [
-                    'Content-Type' => 'application/json; charset=UTF8',
-                    'timeout' => 30,
-                ],
-                'auth' => [
-                    $this->username,
-                    $this->password,
-                ],
-            ]);
-        }
-        catch (ClientException $e)
-        {
-            throw new InvalidArgumentException("$debitAdjustmentID is not a valid service ID.");
-        }
-
-        $objResponse = json_decode($response->getBody());
-        if ($objResponse->data->type != "adjustment" || $objResponse->data->application != "debit")
-        {
-            throw new InvalidArgumentException("$debitAdjustmentID is not a valid debit adjustment service.");
-        }
-
-        try {
-            $response = $this->client->get($this->uri . "/api/v1/system/services/$creditAdjustmentID", [
-                'headers' => [
-                    'Content-Type' => 'application/json; charset=UTF8',
-                    'timeout' => 30,
-                ],
-                'auth' => [
-                    $this->username,
-                    $this->password,
-                ],
-            ]);
-        }
-        catch (ClientException $e)
-        {
-            throw new InvalidArgumentException("$creditAdjustmentID is not a valid service ID.");
-        }
-
-        $objResponse = json_decode($response->getBody());
-        if ($objResponse->data->type != "adjustment" || $objResponse->data->application != "credit")
-        {
-            throw new InvalidArgumentException("$creditAdjustmentID is not a valid credit adjustment service.");
-        }
-
-        return;
-    }
 
     /**
      * Create a new account using the Sonar API
@@ -382,6 +302,6 @@ class AccountImporter extends AccessesSonar
             'json' => $payload,
         ]);
 
-        return $this->addPriorBalanceIfRequired($data, $debitAdjustmentID, $creditAdjustmentID);
+        return $this->addPriorBalanceIfRequired($data);
     }
 }

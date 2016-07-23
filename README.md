@@ -81,9 +81,16 @@ To import accounts, call the function **importAccounts** on the Importer class, 
 
 You should also input a debit adjustment service ID to use for positive prior balances and a credit adjustment service ID to use for negative prior balances, as the second and third parameters, respectively. In the example below, `1` is the ID of the debit adjustment service and `2` is the ID of the credit adjustment service. Ensure that the adjustment services allow access via the role of the user specified in your .env file!
 
-Most of the additional importing functions require accounts to exist, so this should almost always be done first.
+Most of the additional importing functions require accounts to exist, so this should almost always be done first. You can import balances with this import, but you can also update them later using the `BalanceImporter`.
 
 `$results = $importer->importAccounts("/home/simon/accounts.csv", 1, 2);`
+
+###Updating balances
+To update balances on existing accounts, call the function **updateBalances** on the Importer class, passing passing in the path to a properly formatted CSV file with account and balance data. You will need to manipulate your data into the appropriate format before importing, by using the account balances template in the templates folder.
+
+You should also input a debit adjustment service ID to use for positive prior balances and a credit adjustment service ID to use for negative prior balances, as the second and third parameters, respectively. In the example below, `1` is the ID of the debit adjustment service and `2` is the ID of the credit adjustment service. Ensure that the adjustment services allow access via the role of the user specified in your .env file!
+
+`$results = $importer->updateBalances("/home/simon/balances.csv", 1, 2);`
 
 ###Importing contacts
 To import contacts, call the function **importContacts** on the Importer class, passing in the path to a properly formatted CSV file with contact data. You will need to manipulate your data into the appropriate format before importing, by using the contact template in the templates folder.

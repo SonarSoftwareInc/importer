@@ -251,6 +251,22 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the accounts CSV file.
+     * @param int $debitAdjustmentID - An ID for an unlimited debit adjustment service
+     * @param int $creditAdjustmentID - An ID for an unlimited credit adjustment service
+     * @return array
+     */
+    public function updateBalances($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new BalanceImporter($debitAdjustmentID, $creditAdjustmentID);
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool
