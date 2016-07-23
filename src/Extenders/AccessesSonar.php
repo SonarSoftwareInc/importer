@@ -29,5 +29,10 @@ abstract class AccessesSonar
         $this->password = getenv("PASSWORD");
 
         $this->client = new \GuzzleHttp\Client();
+
+        if (!file_exists(getcwd() . "/log_output"))
+        {
+            mkdir(getcwd() . "/log_output");
+        }
     }
 }

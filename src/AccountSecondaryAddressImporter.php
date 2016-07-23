@@ -31,11 +31,6 @@ class AccountSecondaryAddressImporter extends AccessesSonar
         {
             $this->validateImportFile($pathToImportFile);
 
-            if (!file_exists(getcwd() . "/log_output"))
-            {
-                mkdir(getcwd() . "/log_output");
-            }
-
             $failureLogName = tempnam(getcwd() . "/log_output","account_secondary_address_import_failures");
             $failureLog = fopen($failureLogName,"w");
 

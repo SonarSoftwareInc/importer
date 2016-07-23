@@ -20,11 +20,6 @@ class TokenizedCreditCardImporter extends AccessesSonar
         {
             $this->validateImportFile($pathToImportFile);
 
-            if (!file_exists(getcwd() . "/log_output"))
-            {
-                mkdir(getcwd() . "/log_output");
-            }
-
             $failureLogName = tempnam(getcwd() . "/log_output","tokenized_card_import_failures");
             $failureLog = fopen($failureLogName,"w");
 

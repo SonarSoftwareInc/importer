@@ -37,11 +37,6 @@ class AccountImporter extends AccessesSonar
             $this->validateImportFile($pathToImportFile);
             $this->validateServices($debitAdjustmentID, $creditAdjustmentID);
 
-            if (!file_exists(getcwd() . "/log_output"))
-            {
-                mkdir(getcwd() . "/log_output");
-            }
-
             $failureLogName = tempnam(getcwd() . "/log_output","account_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
