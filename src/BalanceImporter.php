@@ -81,6 +81,38 @@ class BalanceImporter extends AccessesSonar
     }
 
     /**
+     * Validate all the data in the import file.
+     * @param $pathToImportFile
+     */
+    private function validateImportFile($pathToImportFile)
+    {
+        $requiredColumns = [ 0,1 ];
+
+        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the balance update import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
+                    if (!is_numeric($data[$colNumber]))
+                    {
+                        throw new InvalidArgumentException("In the balance update import, column number " . ($colNumber + 1) . " is not numeric on row $row.");
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw new InvalidArgumentException("Could not open import file.");
+        }
+
+        return;
+    }
+
+    /**
      * Add a prior balance onto the account
      * @param $accountID
      * @param $balance
