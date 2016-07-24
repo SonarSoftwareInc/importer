@@ -5,7 +5,7 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
-use Extenders\AccessesSonar;
+use SonarSoftware\Importer\Extenders\AccessesSonar;;
 
 class NetworkSiteImporter extends AccessesSonar
 {

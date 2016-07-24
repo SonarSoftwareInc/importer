@@ -6,7 +6,7 @@ use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
-use Extenders\AccessesSonar;
+use SonarSoftware\Importer\Extenders\AccessesSonar;;
 
 class TokenizedCreditCardImporter extends AccessesSonar
 {

@@ -2,7 +2,7 @@
 
 namespace SonarSoftware\Importer;
 
-use Extenders\AccessesSonar;
+use SonarSoftware\Importer\Extenders\AccessesSonar;;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
