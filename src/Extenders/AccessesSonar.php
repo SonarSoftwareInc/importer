@@ -14,7 +14,7 @@ abstract class AccessesSonar
      */
     public function __construct()
     {
-        $dotenv = new \Dotenv\Dotenv(__DIR__);
+        $dotenv = new \Dotenv\Dotenv(__DIR__ . "/../../");
         $dotenv->overload();
         $dotenv->required(
             [
