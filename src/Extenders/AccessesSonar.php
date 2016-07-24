@@ -4,10 +4,10 @@ namespace SonarSoftware\Importer\Extenders;
 
 abstract class AccessesSonar
 {
-    private $uri;
-    private $username;
-    private $password;
-    private $client;
+    protected $uri;
+    protected $username;
+    protected $password;
+    protected $client;
 
     /**
      * Importer constructor.
