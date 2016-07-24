@@ -4,7 +4,7 @@ namespace SonarSoftware\Importer;
 
 use Exception;
 use InvalidArgumentException;
-use SonarSoftware\Importer\Extenders\AccessesSonar;;
+use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class Importer extends AccessesSonar
 {

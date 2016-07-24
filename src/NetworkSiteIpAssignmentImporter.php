@@ -6,7 +6,7 @@ use InvalidArgumentException;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
-use SonarSoftware\Importer\Extenders\AccessesSonar;;
+use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class NetworkSiteIpAssignmentImporter extends AccessesSonar
 {

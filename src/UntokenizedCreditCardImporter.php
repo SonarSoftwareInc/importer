@@ -5,7 +5,7 @@ namespace SonarSoftware\Importer;
 use Exception;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
-use SonarSoftware\Importer\Extenders\AccessesSonar;;
+use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class UntokenizedCreditCardImporter extends AccessesSonar
 {
