@@ -65,7 +65,7 @@ class AddressValidator extends AccessesSonar
                 }
                 catch (Exception $e)
                 {
-                    fputcsv($failureLog,array_merge($data,$e->getMessage()));
+                    fputcsv($failureLog,array_merge($data,[$e->getMessage()]));
                     $returnData['failures'] += 1;
                     continue;
                 }
