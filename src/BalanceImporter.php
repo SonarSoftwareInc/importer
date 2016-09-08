@@ -54,13 +54,15 @@ class BalanceImporter extends AccessesSonar
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row {$this->row} failed: $returnMessage | " . implode(",",$data) . "\n");
+                    array_push($data,$returnMessage);
+                    fputcsv($failureLog,$data);
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fwrite($failureLog,"Row {$this->row} failed: {$e->getMessage()} | " . implode(",",$data) . "\n");
+                    array_push($data,$e->getMessage());
+                    fputcsv($failureLog,$data);
                     $returnData['failures'] += 1;
                     continue;
                 }

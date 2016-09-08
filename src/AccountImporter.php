@@ -93,7 +93,7 @@ class AccountImporter extends AccessesSonar
                         $response = $e->getResponse();
                         $body = json_decode($response->getBody());
                         $returnMessage = implode(", ",(array)$body->error->message);
-                        fputcsv($failureLog,array_merge($data,$returnMessage));
+                        fputcsv($failureLog,array_push($data,$returnMessage));
                         $returnData['failures'] += 1;
                         continue;
                     }

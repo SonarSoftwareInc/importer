@@ -59,13 +59,15 @@ class AddressValidator extends AccessesSonar
                     $response = $e->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fputcsv($failureLog,array_merge($data,$returnMessage));
+                    array_push($data,$returnMessage);
+                    fputcsv($failureLog,$data);
                     $returnData['failures'] += 1;
                     continue;
                 }
                 catch (Exception $e)
                 {
-                    fputcsv($failureLog,array_merge($data,[$e->getMessage()]));
+                    array_push($data,$e->getMessage());
+                    fputcsv($failureLog,$data);
                     $returnData['failures'] += 1;
                     continue;
                 }
