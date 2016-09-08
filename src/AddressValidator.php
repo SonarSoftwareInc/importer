@@ -102,7 +102,7 @@ class AddressValidator extends AccessesSonar
             'country' => trim($data[13]),
         ];
 
-        $validatedAddress = $this->addressFormatter->formatAddress($unformattedAddress);
+        $validatedAddress = $this->addressFormatter->formatAddress($unformattedAddress, true);
         $data[7] = $validatedAddress['line1'];
         $data[8] = array_key_exists("line2",$validatedAddress) ? $validatedAddress['line2'] : null;
         $data[9] = $validatedAddress['city'];

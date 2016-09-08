@@ -82,7 +82,6 @@ class AddressFormatter extends AccessesSonar
                 $address = (array)json_decode($validatedAddressResponse->getBody())->data;
                 if (array_key_exists("latitude",$unformattedAddress) && array_key_exists("longitude",$unformattedAddress))
                 {
-
                     $address['latitude'] = trim($unformattedAddress['latitude']) != '' ? $unformattedAddress['latitude'] : $address['latitude'];
                     $address['longitude'] = trim($unformattedAddress['longitude']) != '' ? $unformattedAddress['longitude'] : $address['longitude'];
                 }
