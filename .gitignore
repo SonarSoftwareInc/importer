@@ -5,3 +5,5 @@ src/.env
 templates/templates.zip
 composer.phar
 vendor/*
+import.php
+validatedAddresses*

@@ -57,13 +57,23 @@ class AccountImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
+            $accountsToImport = [];
+
             $this->row = 0;
-            $requests = function () use ($handle)
+            $requests = function () use ($handle, &$accountsToImport)
             {
                 while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                     $this->row++;
                     try {
-                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccount($data, true));
+                        $payload = $this->buildPayload($data);
+                        if (array_key_exists("sub_accounts",$payload))
+                        {
+                            continue;
+                        }
+
+                        array_push($accountsToImport, $data);
+
+                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccountRequest($data));
                     }
                     catch (InvalidArgumentException $e)
                     {
@@ -72,19 +82,21 @@ class AccountImporter extends AccessesSonar
                 }
             };
 
-            $pool = new Pool($client, $requests(), [
-                'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog)
+            $pool = new Pool($client, $requests($accountsToImport), [
+                'concurrency' => 5,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $accountsToImport)
                 {
                     $returnData['successes'] += 1;
-                    fwrite($successLog,"Import succeeded for account ID ???" . "\n");
+                    fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $accountsToImport)
                 {
                     $response = $reason->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fputcsv($failureLog,array_push($data,$returnMessage));
+                    $line = $accountsToImport[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
                 }
             ]);
@@ -93,38 +105,52 @@ class AccountImporter extends AccessesSonar
             $promise->wait();
 
             /**
-             * We do accounts with sub accounts last, as the children may not have been imported.
+             * We do accounts with sub accounts last, as the masters need to be imported first.
              */
-            if (count($this->accountsWithSubAccounts) > 0)
+            $accountsToImport = [];
+            $requests = function () use ($handle, &$accountsToImport)
             {
-                $requests = function () use ($debitAdjustmentID, $creditAdjustmentID)
-                {
-                    foreach ($this->accountsWithSubAccounts as $row => $data)
-                    {
-                        try {
-                            yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, false));
-                        }
-                        catch (ClientException $e)
+                while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                    $this->row++;
+                    try {
+                        $payload = $this->buildPayload($data);
+                        if (!array_key_exists("sub_accounts",$payload))
                         {
-                            $response = $e->getResponse();
-                            $body = json_decode($response->getBody());
-                            $returnMessage = implode(", ",(array)$body->error->message);
-                            fputcsv($failureLog,array_push($data,$returnMessage));
-                            $returnData['failures'] += 1;
-                            continue;
-                        }
-                        catch (Exception $e)
-                        {
-                            fputcsv($failureLog,array_merge($data,[$e->getMessage()]));
-                            $returnData['failures'] += 1;
                             continue;
                         }
 
-                        $returnData['successes'] += 1;
-                        fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+                        array_push($accountsToImport, $data);
+
+                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccountRequest($data));
                     }
-                };
-            }
+                    catch (InvalidArgumentException $e)
+                    {
+                        //Skipping sub account
+                    }
+                }
+            };
+
+            $pool = new Pool($client, $requests($accountsToImport), [
+                'concurrency' => 5,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $accountsToImport)
+                {
+                    $returnData['successes'] += 1;
+                    fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $accountsToImport)
+                {
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $line = $accountsToImport[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
         }
         else
         {
@@ -293,18 +319,12 @@ class AccountImporter extends AccessesSonar
     /**
      * Create a new account using the Sonar API
      * @param $data
-     * @param bool $delaySubAccounts
      * @return array
      * @throws Exception
      */
-    private function createAccount($data, $delaySubAccounts = true)
+    private function createAccountRequest($data)
     {
         $payload = $this->buildPayload($data);
-        if (array_key_exists("sub_accounts",$payload) && $delaySubAccounts === true)
-        {
-            $this->accountsWithSubAccounts[$this->row] = $data;
-            throw new InvalidArgumentException("Account is a sub account.");
-        }
 
         return [
             'headers' => [
