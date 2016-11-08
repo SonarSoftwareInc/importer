@@ -3,6 +3,9 @@
 namespace SonarSoftware\Importer;
 
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Message\Request;
+use GuzzleHttp\Pool;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
@@ -39,6 +42,8 @@ class AccountImporter extends AccessesSonar
         {
             $this->validateImportFile($pathToImportFile);
 
+            $client = new Client();
+
             $failureLogName = tempnam(getcwd() . "/log_output","account_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
@@ -53,60 +58,72 @@ class AccountImporter extends AccessesSonar
             ];
 
             $this->row = 0;
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $this->row++;
-                try {
-                    $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, true);
+            $requests = function () use ($handle)
+            {
+                while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                    $this->row++;
+                    try {
+                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccount($data, true));
+                    }
+                    catch (InvalidArgumentException $e)
+                    {
+                        //Skipping sub account
+                    }
                 }
-                catch (ClientException $e)
+            };
+
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog)
                 {
-                    $response = $e->getResponse();
+                    $returnData['successes'] += 1;
+                    fwrite($successLog,"Import succeeded for account ID ???" . "\n");
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog)
+                {
+                    $response = $reason->getResponse();
                     $body = json_decode($response->getBody());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    fwrite($failureLog,"Row {$this->row} failed: $returnMessage | " . implode(",",$data) . "\n");
+                    fputcsv($failureLog,array_push($data,$returnMessage));
                     $returnData['failures'] += 1;
-                    continue;
                 }
-                catch (Exception $e)
-                {
-                    fwrite($failureLog,"Row {$this->row} failed: {$e->getMessage()} | " . implode(",",$data) . "\n");
-                    $returnData['failures'] += 1;
-                    continue;
-                }
+            ]);
 
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row {$this->row} succeeded for account ID " . trim($data[0]) . "\n");
-            }
+            $promise = $pool->promise();
+            $promise->wait();
 
             /**
              * We do accounts with sub accounts last, as the children may not have been imported.
              */
             if (count($this->accountsWithSubAccounts) > 0)
             {
-                foreach ($this->accountsWithSubAccounts as $row => $data)
+                $requests = function () use ($debitAdjustmentID, $creditAdjustmentID)
                 {
-                    try {
-                        $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, false);
-                    }
-                    catch (ClientException $e)
+                    foreach ($this->accountsWithSubAccounts as $row => $data)
                     {
-                        $response = $e->getResponse();
-                        $body = json_decode($response->getBody());
-                        $returnMessage = implode(", ",(array)$body->error->message);
-                        fputcsv($failureLog,array_push($data,$returnMessage));
-                        $returnData['failures'] += 1;
-                        continue;
-                    }
-                    catch (Exception $e)
-                    {
-                        fputcsv($failureLog,array_merge($data,[$e->getMessage()]));
-                        $returnData['failures'] += 1;
-                        continue;
-                    }
+                        try {
+                            yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccount($data, $debitAdjustmentID, $creditAdjustmentID, false));
+                        }
+                        catch (ClientException $e)
+                        {
+                            $response = $e->getResponse();
+                            $body = json_decode($response->getBody());
+                            $returnMessage = implode(", ",(array)$body->error->message);
+                            fputcsv($failureLog,array_push($data,$returnMessage));
+                            $returnData['failures'] += 1;
+                            continue;
+                        }
+                        catch (Exception $e)
+                        {
+                            fputcsv($failureLog,array_merge($data,[$e->getMessage()]));
+                            $returnData['failures'] += 1;
+                            continue;
+                        }
 
-                    $returnData['successes'] += 1;
-                    fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
-                }
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+                    }
+                };
             }
         }
         else
@@ -276,21 +293,20 @@ class AccountImporter extends AccessesSonar
     /**
      * Create a new account using the Sonar API
      * @param $data
-     * @param $creditAdjustmentID
-     * @param $debitAdjustmentID
      * @param bool $delaySubAccounts
-     * @return bool
+     * @return array
+     * @throws Exception
      */
-    private function createAccount($data, $debitAdjustmentID, $creditAdjustmentID, $delaySubAccounts = true)
+    private function createAccount($data, $delaySubAccounts = true)
     {
         $payload = $this->buildPayload($data);
         if (array_key_exists("sub_accounts",$payload) && $delaySubAccounts === true)
         {
             $this->accountsWithSubAccounts[$this->row] = $data;
-            return false;
+            throw new InvalidArgumentException("Account is a sub account.");
         }
 
-        $response = $this->client->post($this->uri . "/api/v1/accounts", [
+        return [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -300,8 +316,6 @@ class AccountImporter extends AccessesSonar
                 $this->password,
             ],
             'json' => $payload,
-        ]);
-
-        return $this->addPriorBalanceIfRequired($data);
+        ];
     }
 }
