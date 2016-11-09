@@ -2,6 +2,9 @@
 
 namespace SonarSoftware\Importer;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 use Exception;
 use InvalidArgumentException;
@@ -43,33 +46,71 @@ class BalanceImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $this->row = 0;
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $this->row++;
-                try {
-                    $this->updateBalance($data[0], $data[1]);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    array_push($data,$returnMessage);
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    array_push($data,$e->getMessage());
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
+            $validData = [];
 
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row {$this->row} succeeded for account ID " . trim($data[0]) . "\n");
+            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                try {
+                    $this->returnServiceID($data[1]);
+                    array_push($validData,$data);
+                }
+                catch (InvalidArgumentException $e)
+                {
+                    continue;
+                }
             }
+
+            $requests = function () use ($validData)
+            {
+                foreach ($validData as $validDatum)
+                {
+                    yield new Request("POST",$this->uri . "/api/v1/accounts/" . (int)$validDatum[0] . "/services", [
+                        'Content-Type' => 'application/json; charset=UTF8',
+                        'timeout' => 30,
+                        'Authorization' => 'Basic '. base64_encode($this->username.':'.$this->password),
+                    ]
+                    ,json_encode([
+                        'service_id' => $this->returnServiceID($validDatum[1]),
+                        'prorate' => false,
+                        'amount' => abs($validDatum[1]),
+                    ]));
+                }
+            };
+
+            $client = new Client();
+
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
+                {
+                    $statusCode = $response->getStatusCode();
+                    if ($statusCode > 201)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $line = $validData[$index];
+                        array_push($line,$body);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                    }
+                    else
+                    {
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
+                    }
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                {
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody()->getContents());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $line = $validData[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
         }
         else
         {
@@ -116,43 +157,25 @@ class BalanceImporter extends AccessesSonar
 
     /**
      * Add a prior balance onto the account
-     * @param $accountID
      * @param $balance
      * @return bool
      * @internal param $data
      */
-    public function updateBalance($accountID, $balance)
+    public function returnServiceID($balance)
     {
         $priorBalance = number_format(trim((float)$balance),2,".","");
-        if ($priorBalance != 0)
+        if ($priorBalance == 0)
         {
-            if ($priorBalance > 0)
-            {
-                $serviceID = $this->debitAdjustmentID;
-            }
-            else
-            {
-                $serviceID = $this->creditAdjustmentID;
-            }
-
-            $response = $this->client->post($this->uri . "/api/v1/accounts/$accountID/services", [
-                'headers' => [
-                    'Content-Type' => 'application/json; charset=UTF8',
-                    'timeout' => 30,
-                ],
-                'auth' => [
-                    $this->username,
-                    $this->password,
-                ],
-                'json' => [
-                    'service_id' => $serviceID,
-                    'prorate' => false,
-                    'amount' => abs($priorBalance)
-                ]
-            ]);
+            throw new InvalidArgumentException("Can't import a zero balance.");
         }
 
-        return true;
+        if ($priorBalance > 0) {
+            $serviceID = $this->debitAdjustmentID;
+        } else {
+            $serviceID = $this->creditAdjustmentID;
+        }
+
+        return $serviceID;
     }
 
     /**
