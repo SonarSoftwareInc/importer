@@ -32,33 +32,6 @@ class ServiceImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $row = 0;
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $row++;
-                try {
-                    $this->createService($data);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    array_push($data,$returnMessage);
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    array_push($data,$e->getMessage());
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for service " . trim($data[1]) . "\n");
-            }
         }
         else
         {
@@ -69,5 +42,123 @@ class ServiceImporter extends AccessesSonar
         fclose($successLog);
 
         return $returnData;
+    }
+
+    private function validateImportFile($pathToImportFile)
+    {
+        $requiredColumns = [ 0,1,2,3,6 ];
+        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the account billing parameters import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
+                }
+
+                if (trim($data[1]))
+                {
+                    if (!in_array(trim($data[1]),['one time','recurring','expiring']))
+                    {
+                        throw new InvalidArgumentException(trim($data[1]) . " is not a valid service type.");
+                    }
+                }
+
+                if (trim($data[2]))
+                {
+                    if (!in_array(trim($data[2]),['credit','debit']))
+                    {
+                        throw new InvalidArgumentException(trim($data[2]) . " is not a valid application.");
+                    }
+                }
+
+                if (trim($data[3]))
+                {
+                    if (!is_numeric(trim($data[3])) || trim($data[3]) < 0)
+                    {
+                        throw new InvalidArgumentException(trim($data[3]) . " is not a valid service amount.");
+                    }
+                }
+
+                if (trim($data[4]))
+                {
+                    if (!is_numeric(trim($data[4])) || trim($data[4]) < 1)
+                    {
+                        throw new InvalidArgumentException(trim($data[4]) . " is not a valid number of times to run.");
+                    }
+                }
+
+                if (trim($data[5]))
+                {
+                    $taxes = explode(",",trim($data[5]));
+                    foreach ($taxes as $tax)
+                    {
+                        if (!is_numeric($tax) || $tax < 1)
+                        {
+                            throw new InvalidArgumentException("$tax is not a valid tax ID.");
+                        }
+                    }
+                }
+
+                if (trim($data[9]))
+                {
+                    if (!in_array(trim($data[9]),[0,10,20,30,40,50,60,70,90]))
+                    {
+                        throw new InvalidArgumentException(trim($data[9]) . " is not a valid technology code.");
+                    }
+                }
+
+                if (trim($data[10]))
+                {
+                    if (!is_numeric($data[10]) || $data[10] < 1)
+                    {
+                        throw new InvalidArgumentException($data[10] . " is not a valid general ledger code ID.");
+                    }
+                }
+
+                if (trim($data[11]))
+                {
+                    if (!is_numeric(trim($data[11])) || trim($data[11]) < 0)
+                    {
+                        throw new InvalidArgumentException(trim($data[11]) . " is not a valid tax exemption amount.");
+                    }
+                }
+
+                if ((bool)trim($data[6]) === true)
+                {
+                    if (trim($data[7]))
+                    {
+                        if (!is_numeric(trim($data[7])) || trim($data[7]) < 9)
+                        {
+                            throw new InvalidArgumentException(trim($data[7]) . " is not a valid download in kilobits, it must be numeric and greater than or equal to 8.");
+                        }
+                    }
+
+                    if (trim($data[8]))
+                    {
+                        if (!is_numeric(trim($data[8])) || trim($data[8]) < 9)
+                        {
+                            throw new InvalidArgumentException(trim($data[8]) . " is not a valid upload in kilobits, it must be numeric and greater than or equal to 8.");
+                        }
+                    }
+
+                    if (trim($data[9]))
+                    {
+                        if (!is_numeric($data[9]) || $data[9] < 1)
+                        {
+                            throw new InvalidArgumentException($data[9] . " is not a valid usage based billing policy ID.");
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw new InvalidArgumentException("Could not open import file.");
+        }
+
+        return;
     }
 }

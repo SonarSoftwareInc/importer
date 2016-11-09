@@ -205,3 +205,8 @@ To import IP addresses or subnets onto a network site, call the function **impor
 Importing IPs onto network sites does not offer any automation or monitoring capabilities - it is simply a way to mark an IP address as used so it is not taken for another assignment. This will be expanded on in the future.
 
 `$results = $importer->importNetworkSiteIPs("/home/simon/networkSiteIPs.csv");`
+
+### Importing services
+The service importer is fairly basic, and can only import recurring, expiring, and one time services. If your service needs are complex, you should create them manually rather than utilizing the importer.
+
+`$results = $importer->importServices("/home/simon/services.csv")`
