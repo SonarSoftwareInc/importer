@@ -4,10 +4,9 @@ namespace SonarSoftware\Importer;
 
 use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Request;
 use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
-use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
@@ -66,8 +65,13 @@ class AccountImporter extends AccessesSonar
                         }
 
                         array_push($accountsToImport, $data);
-
-                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccountRequest($data));
+                        
+                        yield new Request("POST",$this->uri . "/api/v1/accounts", [
+                                'Content-Type' => 'application/json; charset=UTF8',
+                                'timeout' => 30,
+                                'Authorization' => 'Basic '. base64_encode($this->username.':'.$this->password),
+                            ]
+                            ,json_encode($this->buildPayload($data)));
                     }
                     catch (InvalidArgumentException $e)
                     {
@@ -76,22 +80,37 @@ class AccountImporter extends AccessesSonar
                 }
             };
 
+
             $pool = new Pool($client, $requests($accountsToImport), [
                 'concurrency' => 5,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $accountsToImport)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $accountsToImport)
                 {
-                    $returnData['successes'] += 1;
-                    fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
+                    $statusCode = $response->getStatusCode();
+                    if ($statusCode > 201)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $line = $accountsToImport[$index];
+                        array_push($line,$body);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                        echo "Failure: $body\n";
+                    }
+                    else
+                    {
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
+                    }
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $accountsToImport)
                 {
                     $response = $reason->getResponse();
-                    $body = json_decode($response->getBody());
+                    $body = json_decode($response->getBody()->getContents());
                     $returnMessage = implode(", ",(array)$body->error->message);
                     $line = $accountsToImport[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
+                    echo "Failure: $returnMessage\n";
                 }
             ]);
 
@@ -290,46 +309,5 @@ class AccountImporter extends AccessesSonar
         }
         
         return $payload;
-    }
-
-    /**
-     * Add a prior balance onto the account
-     * @param $data
-     * @return bool
-     */
-    private function addPriorBalanceIfRequired($data)
-    {
-        $id = (int)trim($data[0]);
-
-        if (trim($data[25]))
-        {
-            $this->balanceImporter->updateBalance($id, (float)$data[25]);
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Create a new account using the Sonar API
-     * @param $data
-     * @return array
-     * @throws Exception
-     */
-    private function createAccountRequest($data)
-    {
-        $payload = $this->buildPayload($data);
-
-        return [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload,
-        ];
     }
 }
