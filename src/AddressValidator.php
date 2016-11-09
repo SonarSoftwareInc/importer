@@ -77,7 +77,9 @@ class AddressValidator extends AccessesSonar
                 fwrite($successLog,"Row {$this->row} succeeded for account ID " . trim($data[0]) . "\n");
             }
 
-        } else {
+        }
+        else
+        {
             throw new InvalidArgumentException("File could not be opened.");
         }
 
