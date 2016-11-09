@@ -97,7 +97,6 @@ class AccountImporter extends AccessesSonar
                         array_push($line,$body);
                         fputcsv($failureLog,$line);
                         $returnData['failures'] += 1;
-                        echo "Failure: $body\n";
                     }
                     else
                     {
@@ -114,7 +113,6 @@ class AccountImporter extends AccessesSonar
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
-                    echo "Failure: $returnMessage\n";
                 }
             ]);
 
