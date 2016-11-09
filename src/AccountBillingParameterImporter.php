@@ -258,31 +258,4 @@ class AccountBillingParameterImporter extends AccessesSonar
         }
         return $payload;
     }
-
-    /**
-     * @param $data
-     * @return mixed
-     */
-    private function updateAccountBillingParameters($data)
-    {
-        $payload = $this->buildPayload($data);
-        if (count($payload) === 0)
-        {
-            return null;
-        }
-
-        $accountID = (int)trim($data[0]);
-
-        return $this->client->patch($this->uri . "/api/v1/accounts/$accountID/billing_parameters", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload,
-        ]);
-    }
 }
