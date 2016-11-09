@@ -12,7 +12,6 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class AccountImporter extends AccessesSonar
 {
-    private $row;
     private $addressFormatter;
 
     /**
@@ -27,9 +26,12 @@ class AccountImporter extends AccessesSonar
     /**
      * @param $pathToImportFile
      * @return array
+     * @throws Exception
      */
     public function import($pathToImportFile)
     {
+        $masterAccountsToImport = [];
+        $subAccountsToImport = [];
 
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -50,46 +52,48 @@ class AccountImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $accountsToImport = [];
+            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                try {
+                    $payload = $this->buildPayload($data);
+                }
+                catch (Exception $e)
+                {
+                    throw new Exception("When building a payload for the following account, the payload generation failed with {$e->getMessage()}: " . implode(",",$data));
+                }
 
-            $this->row = 0;
-            $requests = function () use ($handle, &$accountsToImport)
+                if (array_key_exists("sub_accounts", $payload)) {
+                    array_push($subAccountsToImport, $data);
+                    continue;
+                }
+
+                array_push($masterAccountsToImport, $data);
+            }
+
+            $allAccounts = array_merge($masterAccountsToImport, $subAccountsToImport);
+
+            $requests = function () use ($handle, $allAccounts)
             {
-                while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                    $this->row++;
-                    try {
-                        $payload = $this->buildPayload($data);
-                        if (array_key_exists("sub_accounts",$payload))
-                        {
-                            continue;
-                        }
-
-                        array_push($accountsToImport, $data);
-                        
-                        yield new Request("POST",$this->uri . "/api/v1/accounts", [
-                                'Content-Type' => 'application/json; charset=UTF8',
-                                'timeout' => 30,
-                                'Authorization' => 'Basic '. base64_encode($this->username.':'.$this->password),
-                            ]
-                            ,json_encode($this->buildPayload($data)));
-                    }
-                    catch (InvalidArgumentException $e)
-                    {
-                        //Skipping sub account
-                    }
+                foreach ($allAccounts as $account)
+                {
+                    yield new Request("POST",$this->uri . "/api/v1/accounts", [
+                        'Content-Type' => 'application/json; charset=UTF8',
+                        'timeout' => 30,
+                        'Authorization' => 'Basic '. base64_encode($this->username.':'.$this->password),
+                    ]
+                    ,json_encode($this->buildPayload($account)));
                 }
             };
 
 
-            $pool = new Pool($client, $requests($accountsToImport), [
+            $pool = new Pool($client, $requests($masterAccountsToImport), [
                 'concurrency' => 5,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $accountsToImport)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $allAccounts)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
                     {
                         $body = json_decode($response->getBody()->getContents());
-                        $line = $accountsToImport[$index];
+                        $line = $allAccounts[$index];
                         array_push($line,$body);
                         fputcsv($failureLog,$line);
                         $returnData['failures'] += 1;
@@ -98,67 +102,19 @@ class AccountImporter extends AccessesSonar
                     else
                     {
                         $returnData['successes'] += 1;
-                        fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
+                        fwrite($successLog,"Import succeeded for account ID {$allAccounts[$index][0]}" . "\n");
                     }
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $accountsToImport)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $allAccounts)
                 {
                     $response = $reason->getResponse();
                     $body = json_decode($response->getBody()->getContents());
                     $returnMessage = implode(", ",(array)$body->error->message);
-                    $line = $accountsToImport[$index];
+                    $line = $allAccounts[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
                     echo "Failure: $returnMessage\n";
-                }
-            ]);
-
-            $promise = $pool->promise();
-            $promise->wait();
-
-            /**
-             * We do accounts with sub accounts last, as the masters need to be imported first.
-             */
-            $accountsToImport = [];
-            $requests = function () use ($handle, &$accountsToImport)
-            {
-                while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                    $this->row++;
-                    try {
-                        $payload = $this->buildPayload($data);
-                        if (!array_key_exists("sub_accounts",$payload))
-                        {
-                            continue;
-                        }
-
-                        array_push($accountsToImport, $data);
-
-                        yield new Request("POST",$this->uri . "/api/v1/accounts", $this->createAccountRequest($data));
-                    }
-                    catch (InvalidArgumentException $e)
-                    {
-                        //Skipping sub account
-                    }
-                }
-            };
-
-            $pool = new Pool($client, $requests($accountsToImport), [
-                'concurrency' => 5,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $accountsToImport)
-                {
-                    $returnData['successes'] += 1;
-                    fwrite($successLog,"Import succeeded for account ID {$accountsToImport[$index][0]}" . "\n");
-                },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $accountsToImport)
-                {
-                    $response = $reason->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    $line = $accountsToImport[$index];
-                    array_push($line,$returnMessage);
-                    fputcsv($failureLog,$line);
-                    $returnData['failures'] += 1;
                 }
             ]);
 
