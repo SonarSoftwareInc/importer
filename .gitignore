@@ -7,3 +7,4 @@ composer.phar
 vendor/*
 import.php
 validatedAddresses*
+failed_addresses

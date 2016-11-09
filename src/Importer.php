@@ -14,14 +14,14 @@ class Importer extends AccessesSonar
      * @param int $creditAdjustmentID - An ID for an unlimited credit adjustment service
      * @return array
      */
-    public function importAccounts($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
+    public function importAccounts($pathToImportFile)
     {
         set_time_limit(0);
         $this->validateCredentials();
         $this->validateVersion("0.3.2");
 
         $importer = new AccountImporter();
-        return $importer->import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID);
+        return $importer->import($pathToImportFile);
     }
 
     /**

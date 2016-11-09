@@ -13,11 +13,8 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class AccountImporter extends AccessesSonar
 {
-    private $accountsWithSubAccounts = array();
     private $row;
-
     private $addressFormatter;
-    private $balanceImporter;
 
     /**
      * Importer constructor.
@@ -30,13 +27,10 @@ class AccountImporter extends AccessesSonar
 
     /**
      * @param $pathToImportFile
-     * @param $debitAdjustmentID
-     * @param $creditAdjustmentID
      * @return array
      */
-    public function import($pathToImportFile, $debitAdjustmentID, $creditAdjustmentID)
+    public function import($pathToImportFile)
     {
-        $this->balanceImporter = new BalanceImporter($debitAdjustmentID, $creditAdjustmentID);
 
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
