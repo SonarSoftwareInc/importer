@@ -12,6 +12,8 @@ This tool has been built and tested on Linux, specifically Ubuntu, although it i
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
 formatting tab have notes with more in-depth descriptions. When exporting the CSVs, they should be comma delimited, and strings should be wrapped in double quotes.
 
+All the importers described below use a template from the **templates** folder.
+
 ##Using the importer
 
 ###First Steps
@@ -77,15 +79,11 @@ there is no point in running them through the validator repeatedly - fix them by
 `$results = $addressValidator->validate("/home/simon/accounts.csv");`
 
 ###Importing accounts
-To import accounts, call the function **importAccounts** on the Importer class, passing in the path to a properly formatted CSV file with account data. You will need to manipulate your data into the appropriate format before importing, by using the account template in the templates folder.
-
 Most of the additional importing functions require accounts to exist, so this should almost always be done first. You can also import account balances by using the `updateBalances` function.
 
 `$results = $importer->importAccounts("/home/simon/accounts.csv");`
 
 ###Updating balances
-To update balances on existing accounts, call the function **updateBalances** on the Importer class, passing passing in the path to a properly formatted CSV file with account and balance data. You will need to manipulate your data into the appropriate format before importing, by using the account balances template in the templates folder.
-
 **Bear in mind that all this will do is apply a debit or discount to the account for the amount in the import file - it will not reconcile an account with a currently positive/negative balance to the new value. This should be used to update accounts at a zero balance to a new balance!**
 
 You should also input a debit adjustment service ID to use for positive prior balances and a credit adjustment service ID to use for negative prior balances, as the second and third parameters, respectively. In the example below, `1` is the ID of the debit adjustment service and `2` is the ID of the credit adjustment service. Ensure that the adjustment services allow access via the role of the user specified in your .env file!
@@ -93,34 +91,24 @@ You should also input a debit adjustment service ID to use for positive prior ba
 `$results = $importer->updateBalances("/home/simon/balances.csv", 1, 2);`
 
 ###Importing contacts
-To import contacts, call the function **importContacts** on the Importer class, passing in the path to a properly formatted CSV file with contact data. You will need to manipulate your data into the appropriate format before importing, by using the contact template in the templates folder.
-
 `$results = $importer->importContacts("/home/simon/contacts.csv");`
 
 ###Importing account services
-To import account services, call the function **importAccountServices** on the Importer class, passing in the path to a properly formatted CSV file with account/service relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account service template in the templates folder.
-
 This function is used to add recurring or expiring services to an account.
 
 `$results = $importer->importAccountServices("/home/simon/accountServices.csv");`
 
 ###Importing account packages
-To import account packages, call the function **importAccountPackages** on the Importer class, passing in the path to a properly formatted CSV file with account/package relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account package template in the templates folder.
-
 This function is used to add a package to an account.
 
 `$results = $importer->importAccountPackages("/home/simon/accountPackages.csv");`
 
 ###Importing account billing parameters
-To import account billing parameters, call the function **importAccountBillingParameters** on the Importer class, passing in the path to a properly formatted CSV file with account billing parameter data. You will need to manipulate your data into the appropriate format before importing, by using the account billing parameter template in the templates folder.
-
 By default, when importing accounts, they will inherit the default billing parameters set in Sonar. If you need to override this for specific accounts, use this function.
 
 `$results = $importer->importAccountBillingParameters("/home/simon/accountBillingParameters.csv");`
 
 ###Importing account secondary addresses
-To import account secondary addresses, call the function **importAccountSecondaryAddresses** on the Importer class, passing in the path to a properly formatted CSV file with account secondary address data. You will need to manipulate your data into the appropriate format before importing, by using the account secondary addresses template in the templates folder.
-
 An account secondary address is any non-physical address. The only available built in type is a mailing address, but you can also create additional types.
 
 The second value passed into the import function is a boolean, signifying whether or not you want Sonar to validate the address. This can result in the address being modified if the validation process returns a different format. It will also attempt to geocode the address if
@@ -129,8 +117,6 @@ you omit a latitude/longitude.
 `$results = $importer->importAccountSecondaryAddresses("/home/simon/accountSecondaryAddresses.csv",false);`
 
 ### Importing pre-tokenized credit cards
-To import pre-tokenized credit cards, call the function **importTokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with tokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the tokenized credit card template in the templates folder.
-
 Before using this function, **please ensure you have configured your credit card processor inside Sonar!**
 
 If your existing system tokenized your cards, you should use this function to move the tokens into Sonar.
@@ -138,8 +124,6 @@ If your existing system tokenized your cards, you should use this function to mo
 `$results = $importer->importTokenizedCreditCards("/home/simon/tokenizedCards.csv");`
 
 ### Importing untokenized credit cards
-To import untokenized credit cards, call the function **importUntokenizedCreditCards** on the Importer class, passing in the path to a properly formatted CSV file with untokenized credit card data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized credit card template in the templates folder.
-
 Before using this function, **please ensure you have configured your credit card processor inside Sonar!**
 
 If you currently store untokenized credit card data, you should use this function to import it. **Please be mindful of your PCI compliance obligations when handling untokenized payment method data.** Once the data is entered into Sonar, it will be tokenized - Sonar does not store any untokenized payment method information.
@@ -147,8 +131,6 @@ If you currently store untokenized credit card data, you should use this functio
 `$results = $importer->importUntokenizedCreditCards("/home/simon/untokenizedCards.csv");`
 
 ### Importing tokenized bank accounts/eChecks
-To import tokenized bank accounts, call the function **importTokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with tokenized eCheck data. You will need to manipulate your data into the appropriate format before importing, by using the tokenized bank account template in the templates folder.
-
 Before using this function, **please ensure you have configured your eCheck processor inside Sonar!**
 
 If you currently store tokenized eCheck accounts, you should use this function to move the tokens into Sonar.
@@ -156,8 +138,6 @@ If you currently store tokenized eCheck accounts, you should use this function t
 `$results = $importer->importTokenizedBankAccounts("/home/simon/tokenizedBankAccounts.csv");`
 
 ### Importing untokenized bank accounts
-To import untokenized bank accounts, call the function **importUntokenizedBankAccounts** on the Importer class, passing in the path to a properly formatted CSV file with untokenized bank account data. You will need to manipulate your data into the appropriate format before importing, by using the untokenized bank account template in the templates folder.
-
 Before using this function, **please ensure you have configured your eCheck or ACH processor inside Sonar!**
 
 If you currently store untokenized bank account data, you should use this function to import it. Once the data is entered into Sonar, it will be tokenized if it is to be processed via eCheck. If using ACH, the data will be AES-256 encrypted.
@@ -165,20 +145,14 @@ If you currently store untokenized bank account data, you should use this functi
 `$results = $importer->importUntokenizedBankAccounts("/home/simon/untokenizedBankAccounts.csv");`
 
 ### Importing account files
-To import account files, call the function **importAccountFiles** on the Importer class, passing in the path to a properly formatted CSV file with account file relationship data. You will need to manipulate your data into the appropriate format before importing, by using the account files template in the templates folder.
-
 This function is used to upload files relevant to your accounts to the account file tab.
 
 `$results = $importer->importAccountFiles("/home/simon/accountFiles.csv");`
 
 ### Importing account notes
-To import account notes, call the function **importAccountNotes** on the Importer class, passing in the path to a properly formatted CSV file with account note data. You will need to manipulate your data into the appropriate format before importing, by using the account notes template in the templates folder.
-
 `$results = $importer->importAccountNotes("/home/simon/accountNotes.csv");`
 
 ### Importing network sites
-To import network sites, call the function **importNetworkSites** on the Importer class, passing in the path to a properly formatted CSV file with network site data. You will need to manipulate your data into the appropriate format before importing, by using the network site template in the templates folder.
-
 I strongly recommend you include a valid latitude/longitude in the import, as if your network site is not on a major street, trying to validate the address is likely to result in incorrect map placement. The second value passed into the import
 function is a boolean, signifying whether or not you want Sonar to validate the address. This can result in the address being modified if the validation process returns a different format. It will also attempt to geocode the address if
 you omit a latitude/longitude.
@@ -186,22 +160,16 @@ you omit a latitude/longitude.
 `$results = $importer->importNetworkSites("/home/simon/networkSites.csv",false);`
 
 ### Importing inventory items
-To import inventory items, call the function **importInventoryItems** on the Importer class, passing in the path to a properly formatted CSV file with inventory item data. You will need to manipulate your data into the appropriate format before importing, by using the inventory item template in the templates folder.
-
 If you wish to import IP assignments for customer/network devices, you must import the inventory items first. You will be able to reference MAC addresses on inventory items in the IP import importer.
 
 `$results = $importer->importInventoryItems("/home/simon/inventoryItems.csv");`
 
 ### Importing MAC address associated account IPs
-To import single IP addresses that are associated with MAC addresses on a customer account, call the function **importAccountIPsWithMacAddresses** on the Importer class, passing in the path to a properly formatted CSV file with MAC associated IP data. You will need to manipulate your data into the appropriate format before importing, by using the account MAC IP assignment template in the templates folder.
-
 If you wish to import IP assignments for customer devices, you must import the inventory items first. If you run this import before importing inventory, all of the items will be added as non-inventoried MAC addresses.
 
 `$results = $importer->importAccountIPsWithMacAddresses("/home/simon/ipsWithMacAddresses.csv");`
 
 ### Importing network site IPs
-To import IP addresses or subnets onto a network site, call the function **importNetworkSiteIPs** on the Importer class, passing in the path to a properly formatted CSV file with network site IP data. You will need to manipulate your data into the appropriate format before importing, by using the network site IP assignments in the templates folder.
-
 Importing IPs onto network sites does not offer any automation or monitoring capabilities - it is simply a way to mark an IP address as used so it is not taken for another assignment. This will be expanded on in the future.
 
 `$results = $importer->importNetworkSiteIPs("/home/simon/networkSiteIPs.csv");`
