@@ -12,6 +12,8 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class AccountServiceImporter extends AccessesSonar
 {
+    private $services;
+
     /**
      * @param $pathToImportFile
      * @return array
