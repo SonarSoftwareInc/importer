@@ -44,7 +44,7 @@ class ServiceImporter extends AccessesSonar
             {
                 foreach ($validData as $validDatum)
                 {
-                    yield new Request("POST", $this->uri . "/api/v1/services/", [
+                    yield new Request("POST", $this->uri . "/api/v1/system/services", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
@@ -71,7 +71,7 @@ class ServiceImporter extends AccessesSonar
                     else
                     {
                         $returnData['successes'] += 1;
-                        fwrite($successLog,"Import succeeded for service {$validData[$index][1]}" . "\n");
+                        fwrite($successLog,"Import succeeded for service {$validData[$index][0]}" . "\n");
                     }
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
@@ -101,6 +101,67 @@ class ServiceImporter extends AccessesSonar
         return $returnData;
     }
 
+    /**
+     * @param $data
+     * @return array
+     */
+    private function buildPayload($data)
+    {
+        $payload = [
+            'active' => true,
+            'name' => trim($data[0]),
+            'type' => trim(strtolower($data[1])),
+            'application' => trim(strtolower($data[2])),
+            'amount' => (float)trim($data[3]),
+            'data_service' => (bool)trim($data[6]),
+        ];
+
+        if (trim($data[4]))
+        {
+            $payload['times_to_run'] = (int)trim($data[4]);
+        }
+
+        if (trim($data[5]))
+        {
+            $payload['taxes'] = explode(",",trim($data[5]));
+        }
+
+        if (trim($data[7]))
+        {
+            $payload['download_in_kilobits'] = (int)trim($data[7]);
+        }
+
+        if (trim($data[8]))
+        {
+            $payload['upload_in_kilobits'] = (int)trim($data[8]);
+        }
+
+        if (trim($data[9]))
+        {
+            $payload['technology_code'] = (int)trim($data[9]);
+        }
+
+        if (trim($data[10]))
+        {
+            $payload['usage_based_billing_policy_id'] = (int)trim($data[10]);
+        }
+
+        if (trim($data[11]))
+        {
+            $payload['general_ledger_code_id'] = (int)trim($data[11]);
+        }
+
+        if (trim($data[12]))
+        {
+            $payload['tax_exemption_amount'] = (float)trim($data[12]);
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param $pathToImportFile
+     */
     private function validateImportFile($pathToImportFile)
     {
         $requiredColumns = [ 0,1,2,3,6 ];
