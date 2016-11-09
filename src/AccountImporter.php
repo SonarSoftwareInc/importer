@@ -85,8 +85,8 @@ class AccountImporter extends AccessesSonar
             };
 
 
-            $pool = new Pool($client, $requests($masterAccountsToImport), [
-                'concurrency' => 5,
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $allAccounts)
                 {
                     $statusCode = $response->getStatusCode();
@@ -118,6 +118,8 @@ class AccountImporter extends AccessesSonar
 
             $promise = $pool->promise();
             $promise->wait();
+
+            echo "Pool ran to completion.\n";
         }
         else
         {

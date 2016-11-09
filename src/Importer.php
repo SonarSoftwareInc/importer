@@ -10,8 +10,6 @@ class Importer extends AccessesSonar
 {
     /**
      * @param $pathToImportFile - Input the full path to the accounts CSV file.
-     * @param int $debitAdjustmentID - An ID for an unlimited debit adjustment service
-     * @param int $creditAdjustmentID - An ID for an unlimited credit adjustment service
      * @return array
      */
     public function importAccounts($pathToImportFile)
