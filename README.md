@@ -79,11 +79,9 @@ there is no point in running them through the validator repeatedly - fix them by
 ###Importing accounts
 To import accounts, call the function **importAccounts** on the Importer class, passing in the path to a properly formatted CSV file with account data. You will need to manipulate your data into the appropriate format before importing, by using the account template in the templates folder.
 
-You should also input a debit adjustment service ID to use for positive prior balances and a credit adjustment service ID to use for negative prior balances, as the second and third parameters, respectively. In the example below, `1` is the ID of the debit adjustment service and `2` is the ID of the credit adjustment service. Ensure that the adjustment services allow access via the role of the user specified in your .env file!
+Most of the additional importing functions require accounts to exist, so this should almost always be done first. You can also import account balances by using the `updateBalances` function.
 
-Most of the additional importing functions require accounts to exist, so this should almost always be done first. You can import balances with this import, but you can also update them later using the `BalanceImporter`.
-
-`$results = $importer->importAccounts("/home/simon/accounts.csv", 1, 2);`
+`$results = $importer->importAccounts("/home/simon/accounts.csv");`
 
 ###Updating balances
 To update balances on existing accounts, call the function **updateBalances** on the Importer class, passing passing in the path to a properly formatted CSV file with account and balance data. You will need to manipulate your data into the appropriate format before importing, by using the account balances template in the templates folder.
