@@ -71,7 +71,7 @@ class AccountImporter extends AccessesSonar
 
             $allAccounts = array_merge($masterAccountsToImport, $subAccountsToImport);
 
-            $requests = function () use ($handle, $allAccounts)
+            $requests = function () use ($allAccounts)
             {
                 foreach ($allAccounts as $account)
                 {
@@ -119,7 +119,6 @@ class AccountImporter extends AccessesSonar
             $promise = $pool->promise();
             $promise->wait();
 
-            echo "Pool ran to completion.\n";
         }
         else
         {
