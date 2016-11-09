@@ -8,3 +8,4 @@ vendor/*
 import.php
 validatedAddresses*
 failed_addresses
+.env
