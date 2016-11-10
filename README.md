@@ -166,6 +166,11 @@ If you wish to import IP assignments for customer/network devices, you must impo
 
 `$results = $importer->importInventoryItems("/home/simon/inventoryItems.csv");`
 
+### Importing subnets and IP pools
+Subnets and IP pools can be imported into Sonar, but all supernets must first be configured in IPAM (**Network > IPAM Interface**.) Sonar will automatically calculate which supernet each subnet should fit in. Make sure you import your subnets before trying to import IP pools, as the pools must fit inside a defined subnet.
+
+`$results = $importer->importSubnets("/home/simon/subnets.csv")`
+
 ### Importing MAC address associated account IPs
 If you wish to import IP assignments for customer devices, you must import the inventory items first. If you run this import before importing inventory, all of the items will be added as non-inventoried MAC addresses.
 
