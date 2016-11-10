@@ -3,6 +3,9 @@
 namespace SonarSoftware\Importer;
 
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
@@ -32,33 +35,60 @@ class UntokenizedBankAccountImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $row = 0;
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $row++;
-                try {
-                    $this->createBankAccount($data);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    array_push($data,$returnMessage);
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    array_push($data,$e->getMessage());
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
+            $validData = [];
 
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for account ID " . trim($data[0]) . "\n");
+            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                array_push($validData, $data);
             }
+
+            $requests = function () use ($validData)
+            {
+                foreach ($validData as $validDatum)
+                {
+                    yield new Request("POST", $this->uri . "/api/v1/accounts/" . (int)trim($validDatum[0]) . "/payment_methods", [
+                            'Content-Type' => 'application/json; charset=UTF8',
+                            'timeout' => 30,
+                            'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                        ]
+                        , json_encode($this->buildPayload($validDatum)));
+                }
+            };
+
+            $client = new Client();
+
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
+                {
+                    $statusCode = $response->getStatusCode();
+                    if ($statusCode > 201)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $line = $validData[$index];
+                        array_push($line,$body);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                    }
+                    else
+                    {
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
+                    }
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                {
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody()->getContents());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $line = $validData[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
         }
         else
         {
@@ -113,27 +143,5 @@ class UntokenizedBankAccountImporter extends AccessesSonar
             'account_type' => strtolower(trim($data[4])),
             'auto' => (boolean)$data[5],
         ];
-    }
-
-    /**
-     * @param $data
-     * @return mixed
-     */
-    private function createBankAccount($data)
-    {
-        $payload = $this->buildPayload($data);
-        $accountID = (int)trim($data[0]);
-
-        return $this->client->post($this->uri . "/api/v1/accounts/$accountID/payment_methods", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload,
-        ]);
     }
 }
