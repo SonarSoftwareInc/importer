@@ -54,9 +54,9 @@ class UntokenizedCreditCardImporter extends AccessesSonar
                 }
             };
 
-            $client = new Client();
 
-            $pool = new Pool($client, $requests(), [
+
+            $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
                 {

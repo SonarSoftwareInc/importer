@@ -37,8 +37,6 @@ class AccountImporter extends AccessesSonar
         {
             $this->validateImportFile($pathToImportFile);
 
-            $client = new Client();
-
             $failureLogName = tempnam(getcwd() . "/log_output","account_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
@@ -85,7 +83,7 @@ class AccountImporter extends AccessesSonar
             };
 
 
-            $pool = new Pool($client, $requests(), [
+            $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $allAccounts)
                 {
