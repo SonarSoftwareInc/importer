@@ -2,6 +2,9 @@
 
 namespace SonarSoftware\Importer;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
@@ -33,54 +36,65 @@ class NetworkSiteIpAssignmentImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $row = 0;
+            $validData = [];
+
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $row++;
-                try {
-                    $this->importIpAssignment($data);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $parsedFailures = [];
-                    if (is_array($body->error->message))
-                    {
-                        foreach ($body->error->message as $singleMessage)
-                        {
-                            if (is_object($singleMessage))
-                            {
-                                foreach ($singleMessage as $innerMessage)
-                                {
-                                    array_push($parsedFailures,$innerMessage);
-                                }
-                            }
-                            else
-                            {
-                                array_push($parsedFailures,$singleMessage);
-                            }
-                        }
-                        $returnMessage = implode(", ",$parsedFailures);
-                        fwrite($failureLog,"Row $row failed: $returnMessage\n");
-                    }
-                    else
-                    {
-                        $returnMessage = implode(", ",(array)$body->error->message);
-                        fwrite($failureLog,"Row $row failed: $returnMessage\n");
-                    }
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    fwrite($failureLog,"Row $row failed: {$e->getMessage()}\n");
-                    $returnData['failures'] += 1;
+                $payload = $this->buildPayload($data);
+                if (count($payload) === 0) {
                     continue;
                 }
 
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row $row succeeded for ID " . trim($data[0]) . "\n");
+                array_push($validData, $data);
             }
+
+            $requests = function () use ($validData)
+            {
+                foreach ($validData as $validDatum)
+                {
+                    yield new Request("POST", $this->uri . "/api/v1/network/network_sites/" . trim($validDatum[0]) . "/ip_assignments", [
+                            'Content-Type' => 'application/json; charset=UTF8',
+                            'timeout' => 30,
+                            'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                        ]
+                        , json_encode($this->buildPayload($validDatum)));
+                }
+            };
+
+            $client = new Client();
+
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
+                {
+                    $statusCode = $response->getStatusCode();
+                    if ($statusCode > 201)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $line = $validData[$index];
+                        array_push($line,$body);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                    }
+                    else
+                    {
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
+                    }
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                {
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody()->getContents());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $line = $validData[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
         }
         else
         {
@@ -139,27 +153,5 @@ class NetworkSiteIpAssignmentImporter extends AccessesSonar
         }
         
         return $payload;
-    }
-
-    /**
-     * @param $row
-     * @return bool
-     */
-    private function importIpAssignment($row)
-    {
-        $payload = $this->buildPayload($row);
-        $response = $this->client->post($this->uri . "/api/v1/network/network_sites/" . trim($row[0]) . "/ip_assignments", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload
-        ]);
-
-        return true;
     }
 }
