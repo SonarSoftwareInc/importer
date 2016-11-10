@@ -36,6 +36,7 @@ class AddressValidator extends AccessesSonar
 
             $this->validateImportFile($pathToImportFile);
 
+            $addressFormatter = new AddressFormatter();
 
             $failureLogName = tempnam(getcwd() . "/log_output", "address_validator_failures");
             $failureLog = fopen($failureLogName, "w");
@@ -78,35 +79,55 @@ class AddressValidator extends AccessesSonar
 
             $pool = new Pool($client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $addressesWithoutCounty, $tempHandle)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
                     {
                         //Need to check if the address with county is valid so we can at least use that
-                        $body = json_decode($response->getBody()->getContents());
-                        $line = $validData[$index];
-                        array_push($line,$body);
-                        fputcsv($failureLog,$line);
-                        $returnData['failures'] += 1;
+                        try {
+                            $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index]);
+                            $returnData['successes'] += 1;
+                            fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
+                            fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+                        }
+                        catch (Exception $e)
+                        {
+                            $body = json_decode($response->getBody()->getContents());
+                            $line = $validData[$index];
+                            array_push($line,$body);
+                            fputcsv($failureLog,$line);
+                            $returnData['failures'] += 1;
+                        }
                     }
                     else
                     {
                         $returnData['successes'] += 1;
                         fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                        fputcsv($tempHandle, $this->mergeRow(json_decode($response->getBody()->getContents()), $validData[$index]));
+                        $addressObject = json_decode($response->getBody()->getContents());
+                        $addressAsArray = (array)$addressObject->data;
+                        fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
                     }
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $addressesWithCounty, $successLog, $tempHandle)
                 {
                     //Need to check if the address with county is valid so we can at least use that
-                    $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    $line = $validData[$index];
-                    array_push($line,$returnMessage);
-                    fputcsv($failureLog,$line);
-                    $returnData['failures'] += 1;
+                    try {
+                        $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index]);
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
+                        fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+                    }
+                    catch (Exception $e)
+                    {
+                        $response = $reason->getResponse();
+                        $body = json_decode($response->getBody()->getContents());
+                        $returnMessage = implode(", ",(array)$body->error->message);
+                        $line = $validData[$index];
+                        array_push($line,$returnMessage);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                    }
                 }
             ]);
 
@@ -132,12 +153,12 @@ class AddressValidator extends AccessesSonar
      */
     private function mergeRow($validatedAddress, $currentRow)
     {
-        $currentRow[7] = $validatedAddress->data->line1;
-        $currentRow[9] = $validatedAddress->data->city;
-        $currentRow[10] = $validatedAddress->data->state;
-        $currentRow[11] = $validatedAddress->data->county;
-        $currentRow[12] = $validatedAddress->data->zip;
-        $currentRow[13] = $validatedAddress->data->country;
+        $currentRow[7] = $validatedAddress['line1'];
+        $currentRow[9] = $validatedAddress['city'];
+        $currentRow[10] = $validatedAddress['state'];
+        $currentRow[11] = $validatedAddress['county'];
+        $currentRow[12] = $validatedAddress['zip'];
+        $currentRow[13] = $validatedAddress['country'];
 
         return $currentRow;
     }
