@@ -102,7 +102,7 @@ class AddressFormatter extends AccessesSonar
      * @param $unformattedAddress
      * @return mixed
      */
-    private function doChecksOnUnvalidatedAddress($unformattedAddress)
+    public function doChecksOnUnvalidatedAddress($unformattedAddress)
     {
         if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
         {

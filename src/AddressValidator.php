@@ -2,6 +2,9 @@
 
 namespace SonarSoftware\Importer;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
@@ -48,34 +51,67 @@ class AddressValidator extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $this->row = 0;
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $this->row++;
-                try {
-                    $validatedRow = $this->validateAddress($data);
-                }
-                catch (ClientException $e)
-                {
-                    $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    array_push($data,$returnMessage);
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
-                catch (Exception $e)
-                {
-                    array_push($data,$e->getMessage());
-                    fputcsv($failureLog,$data);
-                    $returnData['failures'] += 1;
-                    continue;
-                }
+            $addressesWithoutCounty = [];
+            $addressesWithCounty = [];
+            $validData = [];
 
-                fputcsv($tempHandle, $validatedRow);
-                $returnData['successes'] += 1;
-                fwrite($successLog,"Row {$this->row} succeeded for account ID " . trim($data[0]) . "\n");
+            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                array_push($addressesWithoutCounty, $this->cleanAddress($data,false));
+                array_push($addressesWithCounty, $this->cleanAddress($data,true));
+                array_push($validData, $data);
             }
+
+            $requests = function () use ($addressesWithoutCounty)
+            {
+                foreach ($addressesWithoutCounty as $addressWithoutCounty)
+                {
+                    yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
+                            'Content-Type' => 'application/json; charset=UTF8',
+                            'timeout' => 30,
+                            'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                        ]
+                        , json_encode($addressWithoutCounty));
+                }
+            };
+
+            $client = new Client();
+
+            $pool = new Pool($client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $addressesWithoutCounty, $tempHandle)
+                {
+                    $statusCode = $response->getStatusCode();
+                    if ($statusCode > 201)
+                    {
+                        //Need to check if the address with county is valid so we can at least use that
+                        $body = json_decode($response->getBody()->getContents());
+                        $line = $validData[$index];
+                        array_push($line,$body);
+                        fputcsv($failureLog,$line);
+                        $returnData['failures'] += 1;
+                    }
+                    else
+                    {
+                        $returnData['successes'] += 1;
+                        fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
+                        fputcsv($tempHandle, $this->mergeRow(json_decode($response->getBody()->getContents()), $validData[$index]));
+                    }
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                {
+                    //Need to check if the address with county is valid so we can at least use that
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody()->getContents());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $line = $validData[$index];
+                    array_push($line,$returnMessage);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
 
         }
         else
@@ -91,33 +127,37 @@ class AddressValidator extends AccessesSonar
     }
 
     /**
+     * @param $validatedAddress
+     * @param $currentRow
+     */
+    private function mergeRow($validatedAddress, $currentRow)
+    {
+        $currentRow[7] = $validatedAddress->data->line1;
+        $currentRow[9] = $validatedAddress->data->city;
+        $currentRow[10] = $validatedAddress->data->state;
+        $currentRow[11] = $validatedAddress->data->county;
+        $currentRow[12] = $validatedAddress->data->zip;
+        $currentRow[13] = $validatedAddress->data->country;
+
+        return $currentRow;
+    }
+
+    /**
      * Either cleans up the address, or throws an exception with a failure message
      * @param $data
+     * @param bool $withCounty
      * @return mixed
      */
-    private function validateAddress($data)
+    private function cleanAddress($data, $withCounty = false)
     {
-        $unformattedAddress = [
+        return  [
             'line1' => trim($data[7]),
             'city' => trim($data[9]),
             'state' => trim($data[10]),
-            'county' => trim($data[11]),
+            'county' => $withCounty === false ? null : trim($data[11]),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
         ];
-
-        $validatedAddress = $this->addressFormatter->formatAddress($unformattedAddress, true);
-        $data[7] = $validatedAddress['line1'];
-        $data[8] = array_key_exists("line2",$validatedAddress) ? $validatedAddress['line2'] : null;
-        $data[9] = $validatedAddress['city'];
-        $data[10] = $validatedAddress['state'];
-        $data[11] = array_key_exists("county",$validatedAddress) ? $validatedAddress['county'] : null;
-        $data[12] = $validatedAddress['zip'];
-        $data[13] = $validatedAddress['country'];
-        $data[14] = array_key_exists("latitude",$validatedAddress) ? $validatedAddress['latitude'] : null;
-        $data[15] = array_key_exists("longitude",$validatedAddress) ? $validatedAddress['longitude'] : null;
-
-        return $data;
     }
 
     /**
