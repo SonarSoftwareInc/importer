@@ -245,9 +245,11 @@ class IPPoolImporter extends AccessesSonar
 
             $supernets = json_decode($supernets->getBody()->getContents());
         }
-
+        
         foreach ($supernetIDs as $supernetID)
         {
+            $page = 1;
+
             $subnets = $this->client->get($this->uri . "/api/v1/network/ipam/supernets/$supernetID/subnets?limit=100&page=$page",[
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
