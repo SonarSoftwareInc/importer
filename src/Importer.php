@@ -293,6 +293,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the subnets CSV file.
+     * @return array
+     */
+    public function importIpPools($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.4.0");
+
+        $importer = new IPPoolImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool
