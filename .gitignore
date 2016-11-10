@@ -9,3 +9,4 @@ import.php
 validatedAddresses*
 failed_addresses
 .env
+*.csv
