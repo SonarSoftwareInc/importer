@@ -6,7 +6,9 @@ If you do not have a background in software development, you are not expected to
 ##Installing
 The recommended installation method is using [Composer](https://getcomposer.org "Composer"). You can install by running `composer require sonarsoftware/importer`.
 
-This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on Windows or OS X.
+This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on any other operating system.
+
+Although this importer should work with PHP 5.4+, I recommend using PHP7 for the best performance.
 
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
@@ -20,10 +22,10 @@ All the importers described below use a template from the **templates** folder.
 
 1. Before importing, we also **strongly recommend** you disable 'Daily Billing' under Financial > Billing > Configuration. You don't want accounts getting billed until your import is complete and verified!
 2. Create all needed services, taxes, address types, groups, statuses, etc. The intent of the importer is to import mass data - accounts, contacts, credit cards, etc. Parts of the importer will require you to reference the status and type of an account, or the type of an address. These will need to be created before you begin. I'd strongly recommend creating a small script to build these items via the API, so that you can easily reset your system after a failed import if needed. There are some importers setup to import basic service structures and some of the other items mentioned here, but it is often easier to just do them by hand.
-3. Setup your payment processor information in Sonar, if you are importing payment methods. You will need a functioning payment processor to import credit cards or eCheck accounts.
-4. Setup your billing defaults under Financial > Billing > Defaults. Having these set to correct values prior to import will help avoid issues with bill dates being set too far in the future.
+3. Setup your payment processor information in Sonar, if you are importing payment methods. **You will need a functioning payment processor to import credit cards or eCheck accounts.**
+4. Setup your billing defaults under **Financial > Billing > Defaults**. Having these set to correct values prior to import will help avoid issues with bill dates being set too far in the future.
 5. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
-6. Use the address validator to validate your accounts CSV before import.
+6. Use the address validator to validate your accounts CSV before import. This step is **very important**, as you will almost certainly have many failures without properly validated addresses.
 
 ###Setup
 To setup the importer for use, create a .env file in the `importer` directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
