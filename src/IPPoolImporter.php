@@ -245,7 +245,7 @@ class IPPoolImporter extends AccessesSonar
 
             $supernets = json_decode($supernets->getBody()->getContents());
         }
-        
+
         foreach ($supernetIDs as $supernetID)
         {
             $page = 1;
