@@ -25,10 +25,10 @@ class NoteImporter extends AccessesSonar
         {
             $this->validateImportFile($pathToImportFile);
 
-            $failureLogName = tempnam(getcwd() . "/log_output",$entity . "_note_import_failures");
+            $failureLogName = tempnam(getcwd() . "/log_output", $entity . "_note_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(getcwd() . "/log_output",$entity . "_note_import_successes");
+            $successLogName = tempnam(getcwd() . "/log_output", $entity . "_note_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
