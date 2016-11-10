@@ -41,7 +41,7 @@ class AccountFileImporter extends AccessesSonar
                 catch (ClientException $e)
                 {
                     $response = $e->getResponse();
-                    $body = json_decode($response->getBody());
+                    $body = json_decode($response->getBody()->getContents());
                     $returnMessage = implode(", ",(array)$body->error->message);
                     array_push($data,$returnMessage);
                     fputcsv($failureLog,$data);
