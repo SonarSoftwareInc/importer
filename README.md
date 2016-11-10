@@ -25,7 +25,7 @@ All the importers described below use a template from the **templates** folder.
 3. Setup your payment processor information in Sonar, if you are importing payment methods. **You will need a functioning payment processor to import credit cards or eCheck accounts.**
 4. Setup your billing defaults under **Financial > Billing > Defaults**. Having these set to correct values prior to import will help avoid issues with bill dates being set too far in the future.
 5. Double check your data - failures in the import CSVs (data in an incorrect column) can have very unintended consequences. For example, putting the account status ID in the prior balance column will definitely not perform the way you want it to..
-6. Use the address validator to validate your accounts CSV before import. This step is **very important**, as you will almost certainly have many failures without properly validated addresses.
+6. Use the address validator to validate all CSVs with addresses in them prior to import. This step is **very important**, as you will almost certainly have many failures without properly validated addresses.
 
 ###Setup
 To setup the importer for use, create a .env file in the `importer` directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
@@ -39,7 +39,7 @@ To use the importer, instantiate the Importer class.
 
 `$importer = new SonarSoftware\Importer\Importer();`
 
-You may have to increase your PHP time limit if you're doing a large import, as it takes some time for each API request. You can change this in your script by calling `set_time_limit(0)` for an infinite timeout, or replacing 0 with the number of seconds.
+You may have to increase your PHP time limit if you're doing a large import, as it takes some time for each API request. You can change this in your script by calling `set_time_limit(0)` for an infinite timeout, or replacing 0 with the number of seconds. This importer will automatically run multiple API requests concurrently.
 
 ###Importer output
 Assuming there are no fatal errors (which will throw an exception) the importer will write logs into the **log_output** folder. This folder will contain a fail and success log file, which will report any failures, as well as successes. An import is
