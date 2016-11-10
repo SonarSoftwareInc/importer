@@ -42,28 +42,39 @@ class SubnetImporter extends AccessesSonar
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $lethSubnet = NetworkAddress::factory(trim($data[1]));
+                $foundAFit = false;
                 foreach ($this->supernets as $supernet)
                 {
-                    if ($supernet['object']->encloses_subnet($lethSubnet))
-                    {
-                        array_push($data,$supernet['id']);
-                        array_push($validData, $data);
-                        continue;
+                    try {
+                        if ($supernet['object']->encloses_subnet($lethSubnet))
+                        {
+                            array_push($data,$supernet['id']);
+                            array_push($validData, $data);
+                            $foundAFit = true;
+                            break;
+                        }
                     }
+                    catch (Exception $e)
+                    {
+                        //
+                    }
+                }
 
+                if ($foundAFit === false)
+                {
                     array_push($data,"Subnet did not fit into any defined supernets.");
                     fputcsv($failureLog,$data);
                     $returnData['failures'] += 1;
                 }
-
             }
+
 
             $requests = function () use ($validData)
             {
                 foreach ($validData as $validDatum)
                 {
                     $supernetID = array_pop($validDatum);
-                    yield new Request("PATCH", $this->uri . "/api/v1/network/ipam/supernets/$supernetID/subnets", [
+                    yield new Request("POST", $this->uri . "/api/v1/network/ipam/supernets/$supernetID/subnets", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
@@ -173,7 +184,7 @@ class SubnetImporter extends AccessesSonar
             'subnet' => trim($data[1]),
             'type' => trim($data[2]),
             'network_site_id' => (int)trim($data[3]),
-            'inline_devices' => explode(",",trim($data[4])),
+            'inline_devices' => $data[4] == null ? null : explode(",",trim($data[4])),
         ];
 
         return $request;
@@ -188,7 +199,7 @@ class SubnetImporter extends AccessesSonar
 
         $page = 1;
 
-        $supernets = $this->client->get($this->uri . "/api/v1/network/supernets&limit=100&page=$page",[
+        $supernets = $this->client->get($this->uri . "/api/v1/network/ipam/supernets?limit=100&page=$page",[
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -199,7 +210,9 @@ class SubnetImporter extends AccessesSonar
             ],
         ]);
 
-        while ($supernets->paginator->current_page < $supernets->paginator->total_pages)
+        $supernets = json_decode($supernets->getBody()->getContents());
+
+        while ($page <= $supernets->paginator->total_pages)
         {
             foreach ($supernets->data as $individualSupernet)
             {
@@ -213,7 +226,7 @@ class SubnetImporter extends AccessesSonar
             }
 
             $page++;
-            $supernets = $this->client->get($this->uri . "/api/v1/network/supernets&limit=100&page=$page",[
+            $supernets = $this->client->get($this->uri . "/api/v1/network/ipam/supernets?limit=100&page=$page",[
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
                     'timeout' => 30,
@@ -223,6 +236,8 @@ class SubnetImporter extends AccessesSonar
                     $this->password,
                 ],
             ]);
+
+            $supernets = json_decode($supernets->getBody()->getContents());
         }
 
         $this->supernets = $supernetArray;
