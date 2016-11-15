@@ -42,7 +42,7 @@ class AccountIpAssignmentImporter extends AccessesSonar
             ];
 
             $this->getExistingMacs();
-
+            
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
@@ -258,7 +258,7 @@ class AccountIpAssignmentImporter extends AccessesSonar
 
         while ($currentPage < $totalPages)
         {
-            $response = $this->client->get($this->uri . "/api/v1/inventory/items?limit=100&page=" . ($currentPage+1), [
+            $response = $this->client->get($this->uri . "/api/v1/inventory/models?limit=100&page=" . ($currentPage+1), [
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
                     'timeout' => 30,
