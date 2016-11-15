@@ -355,30 +355,8 @@ class AccountIpAssignmentImporter extends AccessesSonar
         $cleanMac = str_replace(" ","",$mac);
         $cleanMac = str_replace("-","",$cleanMac);
         $cleanMac = str_replace(":","",$cleanMac);
-        $cleanMac = strtoupper($cleanMac);
+        $cleanMac = trim(strtoupper($cleanMac));
         $macSplit = str_split($cleanMac,2);
         return implode(":",$macSplit);
-    }
-
-    /**
-     * @param $row
-     * @return bool
-     */
-    private function importIpAssignment($row)
-    {
-        $payload = $this->buildPayload($row);
-        $response = $this->client->post($this->uri . "/api/v1/accounts/" . trim($row[0]) . "/ip_assignments", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload
-        ]);
-
-        return true;
     }
 }

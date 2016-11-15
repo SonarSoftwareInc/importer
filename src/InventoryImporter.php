@@ -84,7 +84,15 @@ class InventoryImporter extends AccessesSonar
                 {
                     $response = $reason->getResponse();
                     $body = json_decode($response->getBody()->getContents());
-                    $returnMessage = implode(", ",(array)$body->error->message);
+                    $messages = (array)$body->error->message;
+                    if (isset($messages[0]) && is_object($messages[0]))
+                    {
+                        $returnMessage = implode(", ",(array)$messages[0]);
+                    }
+                    else
+                    {
+                        $returnMessage = implode(", ",$messages);
+                    }
                     $line = $validData[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
@@ -254,6 +262,10 @@ class InventoryImporter extends AccessesSonar
 
         for ($i = 6; $i <= count($row); $i++)
         {
+            if (!isset($row[$i]))
+            {
+                continue;
+            }
             if (trim($row[$i]) == '') {
                 continue;
             }
