@@ -42,7 +42,7 @@ class AccountIpAssignmentImporter extends AccessesSonar
             ];
 
             $this->getExistingMacs();
-            
+
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
