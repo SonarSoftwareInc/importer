@@ -64,7 +64,7 @@ class AccountSecondaryAddressImporter extends AccessesSonar
             {
                 foreach ($validData as $validDatum)
                 {
-                    yield new Request("PATCH", $this->uri . "/api/v1/accounts/" . (int)trim($validDatum[0]) . "/addresses", [
+                    yield new Request("POST", $this->uri . "/api/v1/accounts/" . (int)trim($validDatum[0]) . "/addresses", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
