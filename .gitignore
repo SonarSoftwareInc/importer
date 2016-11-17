@@ -11,3 +11,4 @@ failed_addresses
 .env
 *.csv
 validate.php
+customers/

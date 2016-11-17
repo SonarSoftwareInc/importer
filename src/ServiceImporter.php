@@ -172,7 +172,7 @@ class ServiceImporter extends AccessesSonar
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the account billing parameters import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                        throw new InvalidArgumentException("In the services import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
                 }
 
