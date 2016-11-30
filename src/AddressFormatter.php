@@ -145,7 +145,7 @@ class AddressFormatter extends AccessesSonar
                 $this->counties[$unformattedAddress['state']] = (array)$countiesObject->data;
             }
 
-            if (count($this->counties[$unformattedAddress['state']]) > 0)
+            if (count($this->counties[$unformattedAddress['state']]) > 0 && $unformattedAddress['county'])
             {
                 if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
                 {
