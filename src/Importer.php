@@ -9,6 +9,20 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 class Importer extends AccessesSonar
 {
     /**
+     * @param $pathToImportFile - The full path to the account custom fields file
+     * @return array
+     */
+    public function importAccountCustomFields($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.3.2");
+
+        $importer = new AccountCustomFieldImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * @param $pathToImportFile - Input the full path to the accounts CSV file.
      * @return array
      */

@@ -187,3 +187,8 @@ Importing IPs onto network sites does not offer any automation or monitoring cap
 The service importer is fairly basic, and can only import recurring, expiring, and one time services. If your service needs are complex, you should create them manually rather than utilizing the importer.
 
 `$results = $importer->importServices("/home/simon/services.csv")`
+
+### Importing account custom field contents
+The account custom field importer allows you to import data into predefined custom fields inside Sonar.
+
+`$results = $importer->importAccountCustomFields("/home/simon/account_custom_fields.csv")`
