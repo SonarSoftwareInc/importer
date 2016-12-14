@@ -185,7 +185,7 @@ class AddressValidator extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 7,10,13 ];
+        $requiredColumns = [ 7,9,10,13 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -193,6 +193,11 @@ class AddressValidator extends AccessesSonar
             while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
+                    if ($colNumber === 0 && getenv('DEFAULT_CITY'))
+                    {
+                        continue;
+                    }
+                    
                     if (trim($data[$colNumber]) == '') {
                         throw new InvalidArgumentException("In the address validation call, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
