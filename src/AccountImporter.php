@@ -143,6 +143,11 @@ class AccountImporter extends AccessesSonar
             while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
+                    if ($colNumber === 9 && getenv('DEFAULT_CITY'))
+                    {
+                        //We'll use the default city here.
+                        continue;
+                    }
                     if (trim($data[$colNumber]) == '') {
                         throw new InvalidArgumentException("In the account import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
@@ -176,7 +181,7 @@ class AccountImporter extends AccessesSonar
         $unformattedAddress = [
             'line1' => trim($data[7]),
             'line2' => trim($data[8]),
-            'city' => trim($data[9]),
+            'city' => trim($data[9]) ? trim($data[9]) : getenv('DEFAULT_CITY'),
             'state' => trim($data[10]),
             'county' => trim($data[11]),
             'zip' => trim($data[12]),
