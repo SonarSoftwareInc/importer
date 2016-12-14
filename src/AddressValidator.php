@@ -13,8 +13,6 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class AddressValidator extends AccessesSonar
 {
-    private $row;
-
     private $addressFormatter;
 
     public function __construct()
@@ -173,7 +171,7 @@ class AddressValidator extends AccessesSonar
     {
         return  [
             'line1' => trim($data[7]),
-            'city' => trim($data[9]),
+            'city' => trim($data[9]) ? trim($data[9]) : getenv("DEFAULT_CITY"),
             'state' => trim($data[10]),
             'county' => $withCounty === false ? null : trim($data[11]),
             'zip' => trim($data[12]),
@@ -187,7 +185,7 @@ class AddressValidator extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 7,9,10,13 ];
+        $requiredColumns = [ 7,10,13 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
