@@ -172,7 +172,7 @@ class AddressValidator extends AccessesSonar
         return  [
             'line1' => trim($data[7]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv("DEFAULT_CITY"),
-            'state' => trim($data[10]),
+            'state' => strtoupper(trim($data[10])),
             'county' => $withCounty === false ? null : trim($data[11]),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
