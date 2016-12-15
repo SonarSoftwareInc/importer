@@ -11,7 +11,7 @@ use GuzzleHttp\Exception\ClientException;
 use Carbon\Carbon;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
-class AccountIpAssignmentImporter extends AccessesSonar
+class AccountIpMacAssignmentImporter extends AccessesSonar
 {
     private $existingMacs = [];
 

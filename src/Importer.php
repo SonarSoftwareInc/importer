@@ -230,7 +230,7 @@ class Importer extends AccessesSonar
         $this->validateCredentials();
         $this->validateVersion("0.4.1");
 
-        $importer = new AccountIpAssignmentImporter();
+        $importer = new AccountIpMacAssignmentImporter();
         return $importer->import($pathToImportFile);
     }
 
