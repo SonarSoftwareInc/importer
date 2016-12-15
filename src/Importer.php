@@ -235,6 +235,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the account IPs CSV file.
+     * @return array
+     */
+    public function importAccountIPs($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.4.1");
+
+        $importer = new AccountIpAssignmentImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * @param $pathToImportFile - Input the full path to the network IPs associated with MACs CSV file.
      * @return array
      */

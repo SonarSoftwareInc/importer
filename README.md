@@ -173,6 +173,11 @@ Subnets and IP pools can be imported into Sonar, but all supernets must first be
 
 `$results = $importer->importIpPools("/home/simon/ipPools.csv")`
 
+### Importing account IPs
+If you wish to directly associate IP addresses with accounts, use this importer. This will not bind the IP to a MAC or RADIUS account.
+
+`$results = $importer->importAccountIPs("/home/simon/accountIps.csv");`
+
 ### Importing MAC address associated account IPs
 If you wish to import IP assignments for customer devices, you must import the inventory items first. If you run this import before importing inventory, all of the items will be added as non-inventoried MAC addresses.
 
