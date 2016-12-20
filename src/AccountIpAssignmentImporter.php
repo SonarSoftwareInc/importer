@@ -41,8 +41,6 @@ class AccountIpAssignmentImporter extends AccessesSonar
                 'success_log_name' => $successLogName,
             ];
 
-            $this->getExistingMacs();
-
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
