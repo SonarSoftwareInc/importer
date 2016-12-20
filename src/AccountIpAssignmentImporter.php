@@ -164,6 +164,9 @@ class AccountIpAssignmentImporter extends AccessesSonar
             }
         }
 
+        $payload['assigned_entity'] = 'accounts';
+        $payload['assigned_id'] = trim($row[0]);
+
         return $payload;
     }
 }
