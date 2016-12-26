@@ -153,6 +153,18 @@ class AccountImporter extends AccessesSonar
                     }
                 }
             }
+
+            if ($data[4])
+            {
+                $boom = explode(",",$data[4]);
+                foreach ($boom as $kaboom)
+                {
+                    if (!is_numeric($kaboom))
+                    {
+                        throw new InvalidArgumentException("There is data entered in column 5 for row $row, but it does not match the required format. This column is for groups, and must contain either a single integer, or a set of integers separated by commas. $kaboom is not a valid entry.");
+                    }
+                }
+            }
         }
         else
         {
