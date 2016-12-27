@@ -111,7 +111,9 @@ class AccountServiceImporter extends AccessesSonar
     {
         $serviceArray = [];
 
-        $response = $this->client->get($this->uri . "/api/v1/system/services", [
+        $page = 1;
+
+        $response = $this->client->get($this->uri . "/api/v1/system/services?page=$page", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -136,7 +138,8 @@ class AccountServiceImporter extends AccessesSonar
 
         while ($objResponse->paginator->current_page != $objResponse->paginator->total_pages)
         {
-            $response = $this->client->get($this->uri . "/api/v1/system/services", [
+            $page++;
+            $response = $this->client->get($this->uri . "/api/v1/system/services?page=$page", [
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
                     'timeout' => 30,

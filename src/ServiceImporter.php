@@ -116,42 +116,42 @@ class ServiceImporter extends AccessesSonar
             'data_service' => (bool)trim($data[6]),
         ];
 
-        if (trim($data[4]))
+        if (isset($data[4]))
         {
             $payload['times_to_run'] = (int)trim($data[4]);
         }
 
-        if (trim($data[5]))
+        if (isset($data[5]))
         {
             $payload['taxes'] = explode(",",trim($data[5]));
         }
 
-        if (trim($data[7]))
+        if (isset($data[7]))
         {
             $payload['download_in_kilobits'] = (int)trim($data[7]);
         }
 
-        if (trim($data[8]))
+        if (isset($data[8]))
         {
             $payload['upload_in_kilobits'] = (int)trim($data[8]);
         }
 
-        if (trim($data[9]))
+        if (isset($data[9]))
         {
             $payload['technology_code'] = (int)trim($data[9]);
         }
 
-        if (trim($data[10]))
+        if (isset($data[10]))
         {
             $payload['usage_based_billing_policy_id'] = (int)trim($data[10]);
         }
 
-        if (trim($data[11]))
+        if (isset($data[11]))
         {
             $payload['general_ledger_code_id'] = (int)trim($data[11]);
         }
 
-        if (trim($data[12]))
+        if (isset($data[12]))
         {
             $payload['tax_exemption_amount'] = (float)trim($data[12]);
         }
