@@ -157,7 +157,14 @@ class AddressValidator extends AccessesSonar
         $currentRow[11] = $validatedAddress['county'];
         $currentRow[12] = $validatedAddress['zip'];
         $currentRow[13] = $validatedAddress['country'];
-
+        if (!trim($currentRow[14]))
+        {
+            $currentRow[14] = $validatedAddress['latitude'];
+        }
+        if (!trim($currentRow[15]))
+        {
+            $currentRow[15] = $validatedAddress['longitude'];
+        }
         return $currentRow;
     }
 
