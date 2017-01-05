@@ -48,9 +48,10 @@ class AddressFormatter extends AccessesSonar
      * Return a formatted address for use in the API import. Throws an InvalidArgumentException if something is invalid in the address.
      * @param $unformattedAddress
      * @param bool $validate - Whether or not to try to convert the address to a mappable format. Should be set to false if you don't want the potential of the address being modified.
+     * @param bool $requiresCounty
      * @return array
      */
-    public function formatAddress($unformattedAddress, $validate = true)
+    public function formatAddress($unformattedAddress, $validate = true, $requiresCounty = true)
     {
         if (!array_key_exists($unformattedAddress['country'],$this->countries))
         {
@@ -89,20 +90,21 @@ class AddressFormatter extends AccessesSonar
             }
             catch (Exception $e)
             {
-                return $this->doChecksOnUnvalidatedAddress($unformattedAddress);
+                return $this->doChecksOnUnvalidatedAddress($unformattedAddress, $requiresCounty);
             }
         }
         else
         {
-            return $this->doChecksOnUnvalidatedAddress($unformattedAddress);
+            return $this->doChecksOnUnvalidatedAddress($unformattedAddress, $requiresCounty);
         }
     }
 
     /**
      * @param $unformattedAddress
+     * @param bool $requiresCounty
      * @return mixed
      */
-    public function doChecksOnUnvalidatedAddress($unformattedAddress)
+    public function doChecksOnUnvalidatedAddress($unformattedAddress, $requiresCounty = true)
     {
         if (!array_key_exists($unformattedAddress['country'],$this->subDivisions))
         {
@@ -126,7 +128,7 @@ class AddressFormatter extends AccessesSonar
             throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
         }
 
-        if (trim($unformattedAddress['country']) == "US")
+        if (trim($unformattedAddress['country']) == "US" && $requiresCounty === true)
         {
             if (!array_key_exists(trim($unformattedAddress['state']),$this->counties))
             {
@@ -145,11 +147,18 @@ class AddressFormatter extends AccessesSonar
                 $this->counties[$unformattedAddress['state']] = (array)$countiesObject->data;
             }
 
-            if (count($this->counties[$unformattedAddress['state']]) > 0 && $unformattedAddress['county'])
+            if (count($this->counties[$unformattedAddress['state']]) > 0)
             {
-                if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
+                if ($unformattedAddress['county'])
                 {
-                    throw new InvalidArgumentException("The county is not a valid county for the state.");
+                    if (!in_array($unformattedAddress['county'],$this->counties[$unformattedAddress['state']]))
+                    {
+                        throw new InvalidArgumentException("The county is not a valid county for the state.");
+                    }
+                }
+                else
+                {
+                    throw new InvalidArgumentException("This address requires a county.");
                 }
             }
         }

@@ -135,7 +135,7 @@ class AccountImporter extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1,2,3,7,9,10,13,16 ];
+        $requiredColumns = [ 0,1,2,3,7,9,10,13];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -187,14 +187,14 @@ class AccountImporter extends AccessesSonar
             'name' => trim($data[1]),
             'account_type_id' => (int)$data[2],
             'account_status_id' => (int)$data[3],
-            'contact_name' => trim($data[16]),
+            'contact_name' => trim($data[16]) ? trim($data[16]) : trim($data[1]),
         ];
 
         $unformattedAddress = [
             'line1' => trim($data[7]),
             'line2' => trim($data[8]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv('DEFAULT_CITY'),
-            'state' => trim($data[10]),
+            'state' => strtoupper(trim($data[10])),
             'county' => trim($data[11]),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
@@ -202,7 +202,7 @@ class AccountImporter extends AccessesSonar
             'longitude' => trim($data[15]),
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, false);
+        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, false, true);
 
         $payload = array_merge($payload,$formattedAddress);
 

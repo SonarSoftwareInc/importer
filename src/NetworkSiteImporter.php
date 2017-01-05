@@ -147,7 +147,7 @@ class NetworkSiteImporter extends AccessesSonar
 
         if ($unformattedAddress['line1'] && $unformattedAddress['city'] && $unformattedAddress['state'])
         {
-            $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress);
+            $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress, false);
             $payload['line1'] = $formattedAddress['line1'];
             $payload['line2'] = $formattedAddress['line2'];
             $payload['city'] = $formattedAddress['city'];

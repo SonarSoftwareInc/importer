@@ -13,3 +13,4 @@ failed_addresses
 validate.php
 customers/
 *.env
+*validatedAddresses*
