@@ -118,7 +118,6 @@ class ServiceImporter extends AccessesSonar
 
         if (trim($data[4]))
         {
-            echo "IT IS SET";
             $payload['times_to_run'] = (int)trim($data[4]);
         }
 

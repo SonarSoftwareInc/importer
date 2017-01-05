@@ -152,7 +152,7 @@ class AccountIpAssignmentImporter extends AccessesSonar
         {
             if (trim($row[2]) !== '')
             {
-                $payload['description'] = trim($row[3]);
+                $payload['description'] = trim($row[2]);
             }
         }
 
@@ -160,7 +160,7 @@ class AccountIpAssignmentImporter extends AccessesSonar
         {
             if (is_numeric($row[3]))
             {
-                $payload['service_id'] = (int)trim($row[4]);
+                $payload['service_id'] = (int)trim($row[3]);
             }
         }
 
