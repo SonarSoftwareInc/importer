@@ -156,6 +156,11 @@ class ServiceImporter extends AccessesSonar
             $payload['tax_exemption_amount'] = (float)trim($data[12]);
         }
 
+        if (trim($data[13]))
+        {
+            $payload['id'] = (int)trim($data[13]);
+        }
+
         return $payload;
     }
 
