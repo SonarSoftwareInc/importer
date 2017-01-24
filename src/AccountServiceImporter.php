@@ -217,7 +217,7 @@ class AccountServiceImporter extends AccessesSonar
             'prorate' => false
         ];
 
-        if ($data[2])
+        if ($data[2] !== '' && $data[2] !== null)
         {
             $payload['price_override'] = (float)trim($data[2]);
             $payload['price_override_reason'] = trim($data[3]) ? trim($data[3]) : 'Unknown';
