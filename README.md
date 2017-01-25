@@ -197,3 +197,8 @@ The service importer is fairly basic, and can only import recurring, expiring, a
 The account custom field importer allows you to import data into predefined custom fields inside Sonar.
 
 `$results = $importer->importAccountCustomFields("/home/simon/account_custom_fields.csv")`
+
+### Importing RADIUS accounts
+The RADIUS account importer allows you to import RADIUS accounts and, optionally, bind a pool address to the account. This will be used for the 'Framed-IP-Address' attribute on the RADIUS server if attached.
+
+`$results = $importer->importRadiusAccounts("/home/simon/radius_accounts.csv")`
