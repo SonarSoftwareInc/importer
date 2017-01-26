@@ -8,6 +8,7 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
+use parseCSV;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class NoteImporter extends AccessesSonar
@@ -40,7 +41,11 @@ class NoteImporter extends AccessesSonar
 
             $validData = [];
 
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+            $csv = new parseCSV($pathToImportFile);
+
+            foreach ($csv->data as $data)
+            {
+                $data = array_values($data);
                 array_push($validData, $data);
             }
 
@@ -112,21 +117,17 @@ class NoteImporter extends AccessesSonar
     {
         $requiredColumns = [ 0,1,2 ];
 
-        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        $row = 0;
+        $csv = new parseCSV($pathToImportFile);
+        foreach ($csv->data as $data)
         {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
-                $row++;
-                foreach ($requiredColumns as $colNumber) {
-                    if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the note import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
-                    }
+            $data = array_values($data);
+            $row++;
+            foreach ($requiredColumns as $colNumber) {
+                if (trim($data[$colNumber]) == '') {
+                    throw new InvalidArgumentException("In the note import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                 }
             }
-        }
-        else
-        {
-            throw new InvalidArgumentException("Could not open import file.");
         }
 
         return;
