@@ -8,7 +8,6 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use GuzzleHttp\Exception\ClientException;
-use parseCSV;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class NoteImporter extends AccessesSonar
@@ -21,11 +20,9 @@ class NoteImporter extends AccessesSonar
     public function import($pathToImportFile, $entity)
     {
         $this->validateEntity($entity);
-
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $this->validateImportFile($pathToImportFile);
-
             $failureLogName = tempnam(getcwd() . "/log_output", $entity . "_note_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
@@ -41,12 +38,11 @@ class NoteImporter extends AccessesSonar
 
             $validData = [];
 
-            $csv = new parseCSV($pathToImportFile);
-
-            foreach ($csv->data as $data)
-            {
-                $data = array_values($data);
-                array_push($validData, $data);
+            if (($handle = fopen($pathToImportFile, "r")) !== FALSE) {
+                while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                    array_push($validData, $data);
+                }
+                fclose($handle);
             }
 
             $requests = function () use ($validData, $entity)
@@ -118,18 +114,18 @@ class NoteImporter extends AccessesSonar
         $requiredColumns = [ 0,1,2 ];
 
         $row = 0;
-        $csv = new parseCSV($pathToImportFile);
-        foreach ($csv->data as $data)
-        {
-            $data = array_values($data);
-            $row++;
-            foreach ($requiredColumns as $colNumber) {
-                if (trim($data[$colNumber]) == '') {
-                    throw new InvalidArgumentException("In the note import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+
+        if (($handle = fopen($pathToImportFile, "r")) !== FALSE) {
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the note import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
                 }
             }
+            fclose($handle);
         }
-
         return;
     }
 
