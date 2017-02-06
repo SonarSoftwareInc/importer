@@ -111,7 +111,7 @@ class AddressValidator extends AccessesSonar
                         $addressObject = json_decode($response->getBody()->getContents());
 
                         $this->redisClient->set($this->generateAddressKey($addressesWithoutCounty[$index]),json_encode((array)$addressObject->data));
-                        $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),604800);
+                        $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),18144000);
 
                         $addressAsArray = (array)$addressObject->data;
                         fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));

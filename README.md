@@ -8,7 +8,7 @@ The recommended installation method is using [Composer](https://getcomposer.org 
 
 This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on any other operating system.
 
-The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.
+**The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.**
 
 Although this importer should work with PHP 5.5+, I recommend using PHP7 for the best performance. If you're using Ubuntu 16.x, you will have PHP7 installed by default.
 
