@@ -14,10 +14,12 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 class AddressValidator extends AccessesSonar
 {
     private $addressFormatter;
+    private $redisClient;
 
     public function __construct()
     {
         parent::__construct();
+        $this->redisClient = new \Predis\Client();
         $this->addressFormatter = new AddressFormatter();
     }
 
@@ -64,6 +66,11 @@ class AddressValidator extends AccessesSonar
             {
                 foreach ($addressesWithoutCounty as $addressWithoutCounty)
                 {
+                    if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
+                    {
+                        continue;
+                    }
+
                     yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
@@ -74,10 +81,9 @@ class AddressValidator extends AccessesSonar
             };
 
 
-
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty, $addressesWithoutCounty)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
@@ -103,6 +109,10 @@ class AddressValidator extends AccessesSonar
                         $returnData['successes'] += 1;
                         fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
                         $addressObject = json_decode($response->getBody()->getContents());
+
+                        $this->redisClient->set($this->generateAddressKey($addressesWithoutCounty[$index]),json_encode((array)$addressObject->data));
+                        $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),604800);
+
                         $addressAsArray = (array)$addressObject->data;
                         fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
                     }
@@ -128,6 +138,18 @@ class AddressValidator extends AccessesSonar
                     }
                 }
             ]);
+
+            //Go through the addresses and check if they are in the cache. If so, add the data to the document.
+            foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
+            {
+                if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
+                {
+                    $data = $this->redisClient->get($this->generateAddressKey($addressWithoutCounty));
+                    $returnData['successes'] += 1;
+                    fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
+                    fputcsv($tempHandle, $this->mergeRow((array)json_decode($data), $validData[$index]));
+                }
+            }
 
             $promise = $pool->promise();
             $promise->wait();
@@ -217,5 +239,21 @@ class AddressValidator extends AccessesSonar
         }
 
         return;
+    }
+
+    /**
+     * Generate an address key for caching
+     * @param array $cleanedAddress
+     * @return null
+     */
+    private function generateAddressKey(array $cleanedAddress)
+    {
+        $key = null;
+        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['line1']);
+        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['city']);
+        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['state']);
+        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['zip']);
+
+        return $key;
     }
 }
