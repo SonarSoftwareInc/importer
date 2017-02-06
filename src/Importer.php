@@ -335,6 +335,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the tickets CSV file.
+     * @return array
+     */
+    public function importTickets($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("1.0.0");
+
+        $importer = new TicketImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * @param $pathToImportFile - Input the full path to the RADIUS account CSV file
      * @return array
      */

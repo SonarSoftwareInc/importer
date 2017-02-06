@@ -2,6 +2,8 @@
 
 namespace SonarSoftware\Importer;
 
+use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
@@ -33,14 +35,23 @@ class TicketImporter extends AccessesSonar
             ];
 
             $validData = [];
+            $additionalComments = [];
+            $ticketIDs = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
                 $payload = $this->buildPayload($data);
-                if (count($payload) === 0) {
-                    continue;
-                }
-
                 array_push($validData, $data);
+                $additionalCommentsForThisTicket = [];
+                $i = 8;
+                while (isset($data[$i]))
+                {
+                    if ($data[$i] == null)
+                    {
+                        break;
+                    }
+                    array_push($additionalCommentsForThisTicket,$data[$i]);
+                }
+                array_push($additionalComments,$additionalCommentsForThisTicket);
             }
 
             $requests = function () use ($validData)
@@ -58,12 +69,13 @@ class TicketImporter extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, &$ticketIDs)
                 {
                     $statusCode = $response->getStatusCode();
+                    $body = json_decode($response->getBody()->getContents());
+
                     if ($statusCode > 201)
                     {
-                        $body = json_decode($response->getBody()->getContents());
                         $line = $validData[$index];
                         array_push($line,$body);
                         fputcsv($failureLog,$line);
@@ -73,6 +85,7 @@ class TicketImporter extends AccessesSonar
                     {
                         $returnData['successes'] += 1;
                         fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
+                        $ticketIDs[$index] = $body->id;
                     }
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
@@ -84,6 +97,43 @@ class TicketImporter extends AccessesSonar
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
+
+            //Now for ticket comments!
+            $requests = function () use ($ticketIDs, $additionalComments)
+            {
+                foreach ($ticketIDs as $index => $ticketID)
+                {
+                    if (isset($additionalComments[$index]))
+                    {
+                        foreach ($additionalComments[$index] as $additionalCommentBody)
+                        {
+                            yield new Request("POST", $this->uri . "/api/v1/tickets/$ticketID/ticket_comments", [
+                                    'Content-Type' => 'application/json; charset=UTF8',
+                                    'timeout' => 30,
+                                    'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                                ]
+                                , json_encode([
+                                    'text' => $additionalCommentBody
+                                ]));
+                        }
+                    }
+                }
+            };
+
+            $pool = new Pool($this->client, $requests(), [
+                'concurrency' => 10,
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, &$ticketIDs)
+                {
+                    //Just do nothing here, too late to deal with any failures.
+                },
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                {
+                    //Just do nothing here, too late to deal with any failures.
                 }
             ]);
 
@@ -102,18 +152,98 @@ class TicketImporter extends AccessesSonar
     }
 
     /**
-     * @param $file
+     * @param $pathToImportFile
      */
-    private function validateImportFile($file)
+    private function validateImportFile($pathToImportFile)
     {
+        $requiredColumns = [ 0,1,2,7];
 
+        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the ticket import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
+                }
+
+                if ($data[3])
+                {
+                    if (!is_numeric($data[3]))
+                    {
+                        throw new InvalidArgumentException("In the ticket import, the account number column is not numeric on row $row, and it must be.");
+                    }
+                }
+
+                if ($data[4])
+                {
+                    try {
+                        new Carbon($data[4]);
+                    }
+                    catch (Exception $e)
+                    {
+                        throw new InvalidArgumentException("{$data[4]} is not a valid date on row $row.");
+                    }
+                }
+
+                if ($data[5])
+                {
+                    $priority = (int)$data[5];
+                    if (!in_array($priority,[1,2,3,4]))
+                    {
+                        throw new InvalidArgumentException("{$data[4]} is not a valid date on row $row.");
+                    }
+                }
+
+                if ($data[6])
+                {
+                    $boom = explode(",",$data[6]);
+                    foreach ($boom as $bewm)
+                    {
+                        if (!is_numeric($bewm))
+                        {
+                            throw new InvalidArgumentException("{$data[6]} is not a valid list of category IDs on row $row.");
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw new InvalidArgumentException("Could not open import file.");
+        }
     }
 
     /**
      * @param $line
+     * @return array
      */
     private function buildPayload($line)
     {
+        if ($line[4])
+        {
+            $carbon = new Carbon($line[4]);
+        }
 
+        $payload = [
+            'subject' => $line[0],
+            'type' => 'internal',
+            'ticket_group_id' => $line[1],
+            'category_ids' => explode(",",$line[6]),
+            'user_id' => $line[2],
+            'due_date' => $line[4] ? $carbon->toDateString() : null,
+            'priority' => $line[5],
+            'comment' => $line[7],
+        ];
+
+        if ($line[3])
+        {
+            $payload['assignee'] = "accounts";
+            $payload['assignee_id'] = $line[3];
+        }
+
+        return $payload;
     }
 }

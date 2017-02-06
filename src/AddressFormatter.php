@@ -163,6 +163,21 @@ class AddressFormatter extends AccessesSonar
             }
         }
 
+        if ($unformattedAddress['city'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing a city.");
+        }
+
+        if ($unformattedAddress['state'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing a state.");
+        }
+
+        if ($unformattedAddress['country'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing a country.");
+        }
+
         return $unformattedAddress;
     }
 }
