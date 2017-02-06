@@ -18,7 +18,8 @@
     "vlucas/phpdotenv": "^2.2",
     "nesbot/carbon": "^1.21",
     "leth/ip-address": "^1.1",
-    "parsecsv/php-parsecsv": "^0.4.5"
+    "parsecsv/php-parsecsv": "^0.4.5",
+    "predis/predis": "^1.1"
   },
   "autoload": {
     "psr-4" : {

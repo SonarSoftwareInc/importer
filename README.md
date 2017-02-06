@@ -1,14 +1,16 @@
 # Sonar Importer
 This PHP library uses the Sonar API to import data from a standard format into Sonar.
 
-If you do not have a background in software development, you are not expected to use this tool yourself. Feel free to contact us at support@sonar.software for assistance.
+###If you do not have a background in software development, you are not expected to use this tool yourself. Feel free to contact us at support@sonar.software for assistance.
 
 ##Installing
 The recommended installation method is using [Composer](https://getcomposer.org "Composer"). You can install by running `composer require sonarsoftware/importer`.
 
 This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on any other operating system.
 
-Although this importer should work with PHP 5.4+, I recommend using PHP7 for the best performance.
+The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.
+
+Although this importer should work with PHP 5.5+, I recommend using PHP7 for the best performance. If you're using Ubuntu 16.x, you will have PHP7 installed by default.
 
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
@@ -79,6 +81,8 @@ The requirement for addresses in Sonar is a line1 value, a city, a state, a zip/
 there is no point in running them through the validator repeatedly - fix them by hand, and move on to the account import. Bear in mind that any failures in the address validator will translate into failures in the account importer, so make sure you run through this step first!
 
 `$results = $addressValidator->validate("/home/simon/accounts.csv");`
+
+Please note that address validation results are cached and reused, to prevent excessive geocoding requests. If you need to force a new lookup of addresses, you will need to clear your Redis cache.
 
 ###Importing accounts
 Most of the additional importing functions require accounts to exist, so this should almost always be done first. You can also import account balances by using the `updateBalances` function.
