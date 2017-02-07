@@ -7,6 +7,7 @@ use Exception;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
+use parseCSV;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
 class TicketImporter extends AccessesSonar
@@ -17,6 +18,8 @@ class TicketImporter extends AccessesSonar
      */
     public function import($pathToImportFile)
     {
+        ini_set('auto_detect_line_endings',true);
+
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $this->validateImportFile($pathToImportFile);
@@ -38,21 +41,24 @@ class TicketImporter extends AccessesSonar
             $additionalComments = [];
             $ticketIDs = [];
 
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $payload = $this->buildPayload($data);
+            echo "Building payloads\n";
+            while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 array_push($validData, $data);
                 $additionalCommentsForThisTicket = [];
                 $i = 8;
                 while (isset($data[$i]))
                 {
-                    if ($data[$i] == null)
+                    if (trim($data[$i]) == null)
                     {
                         break;
                     }
                     array_push($additionalCommentsForThisTicket,$data[$i]);
+                    $i++;
                 }
                 array_push($additionalComments,$additionalCommentsForThisTicket);
             }
+
+            return;
 
             $requests = function () use ($validData)
             {
@@ -158,6 +164,7 @@ class TicketImporter extends AccessesSonar
     {
         $requiredColumns = [0,7];
 
+
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $row = 0;
@@ -165,7 +172,6 @@ class TicketImporter extends AccessesSonar
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
-                        print_r($data);
                         throw new InvalidArgumentException("In the ticket import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
                 }
@@ -214,7 +220,10 @@ class TicketImporter extends AccessesSonar
                         }
                     }
                 }
-            }
+
+                unset($boom);
+                unset($data);
+           }
         }
         else
         {
