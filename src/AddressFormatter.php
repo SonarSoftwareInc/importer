@@ -178,6 +178,11 @@ class AddressFormatter extends AccessesSonar
             throw new InvalidArgumentException("This address is missing a country.");
         }
 
+        if ($unformattedAddress['zip'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing a ZIP.");
+        }
+
         return $unformattedAddress;
     }
 }

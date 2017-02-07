@@ -156,17 +156,23 @@ class TicketImporter extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1,2,7];
+        $requiredColumns = [0,7];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
             $row = 0;
-            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+            while (($data = fgetcsv($fileHandle, 0, ",",'"')) !== FALSE) {
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {
+                        print_r($data);
                         throw new InvalidArgumentException("In the ticket import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
+                }
+
+                if (!$data[1] && $data[2])
+                {
+                    throw new InvalidArgumentException("You must have either a ticket group or user ID on row $row.");
                 }
 
                 if ($data[3])
