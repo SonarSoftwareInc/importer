@@ -363,6 +363,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the call log CSV file
+     * @return array
+     */
+    public function importCallLogs($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.4.0");
+
+        $importer = new CallLogImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool

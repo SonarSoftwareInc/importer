@@ -206,3 +206,8 @@ The account custom field importer allows you to import data into predefined cust
 The RADIUS account importer allows you to import RADIUS accounts and, optionally, bind a pool address to the account. This will be used for the 'Framed-IP-Address' attribute on the RADIUS server if attached.
 
 `$results = $importer->importRadiusAccounts("/home/simon/radius_accounts.csv")`
+
+### Importing call logs
+The call log importer allows you to import existing call logs.
+
+`$results = $importer->importCallLogs("/home/simon/call_logs.csv")`
