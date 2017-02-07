@@ -211,3 +211,8 @@ The RADIUS account importer allows you to import RADIUS accounts and, optionally
 The call log importer allows you to import existing call logs.
 
 `$results = $importer->importCallLogs("/home/simon/call_logs.csv")`
+
+### Importing scheduled jobs
+If you have scheduled jobs that need to be imported, you can import them using this template. You must have schedules and job types prebuilt to support these jobs, and there must be sufficient room in the schedule to add them.
+
+`$results = $importer->importScheduledJobs("/home/simon/scheduled_jobs.csv")`

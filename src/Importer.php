@@ -377,6 +377,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Input the full path to the scheduled job CSV file
+     * @return array
+     */
+    public function importScheduledJobs($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("1.0.0");
+
+        $importer = new ScheduledJobImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool
