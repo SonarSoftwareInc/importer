@@ -41,7 +41,6 @@ class TicketImporter extends AccessesSonar
             $additionalComments = [];
             $ticketIDs = [];
 
-            echo "Building payloads\n";
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 array_push($validData, $data);
                 $additionalCommentsForThisTicket = [];
@@ -57,8 +56,6 @@ class TicketImporter extends AccessesSonar
                 }
                 array_push($additionalComments,$additionalCommentsForThisTicket);
             }
-
-            return;
 
             $requests = function () use ($validData)
             {
@@ -91,7 +88,7 @@ class TicketImporter extends AccessesSonar
                     {
                         $returnData['successes'] += 1;
                         fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
-                        $ticketIDs[$index] = $body->id;
+                        $ticketIDs[$index] = $body->data->id;
                     }
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
