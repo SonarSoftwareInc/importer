@@ -173,12 +173,31 @@ class AddressValidator extends AccessesSonar
      */
     private function mergeRow($validatedAddress, $currentRow)
     {
-        $currentRow[7] = $validatedAddress['line1'];
-        $currentRow[9] = $validatedAddress['city'];
-        $currentRow[10] = $validatedAddress['state'];
-        $currentRow[11] = $validatedAddress['county'];
-        $currentRow[12] = $validatedAddress['zip'];
-        $currentRow[13] = $validatedAddress['country'];
+        if ($validatedAddress['line1'])
+        {
+            $currentRow[7] = $validatedAddress['line1'];
+        }
+        if ($validatedAddress['city'])
+        {
+            $currentRow[9] = $validatedAddress['city'];
+        }
+        if ($validatedAddress['state'])
+        {
+            $currentRow[10] = $validatedAddress['state'];
+        }
+        if ($validatedAddress['county'])
+        {
+            $currentRow[11] = $validatedAddress['county'];
+        }
+        if ($validatedAddress['zip'])
+        {
+            $currentRow[12] = $validatedAddress['zip'];
+        }
+        if ($validatedAddress['country'])
+        {
+            $currentRow[13] = $validatedAddress['country'];
+        }
+
         if (!trim($currentRow[14]))
         {
             $currentRow[14] = $validatedAddress['latitude'];
