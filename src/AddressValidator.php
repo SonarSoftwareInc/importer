@@ -80,7 +80,6 @@ class AddressValidator extends AccessesSonar
                 }
             };
 
-
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty, $addressesWithoutCounty)
@@ -273,6 +272,6 @@ class AddressValidator extends AccessesSonar
         $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['state']);
         $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['zip']);
 
-        return $key;
+        return strtolower($key);
     }
 }
