@@ -208,16 +208,17 @@ class Importer extends AccessesSonar
 
     /**
      * @param $pathToImportFile - Input the full path to the inventory items CSV file.
+     * @param bool $discardInvalidFields
      * @return array
      */
-    public function importInventoryItems($pathToImportFile)
+    public function importInventoryItems($pathToImportFile, $discardInvalidFields = false)
     {
         set_time_limit(0);
         $this->validateCredentials();
         $this->validateVersion("0.3.8");
 
         $importer = new InventoryImporter();
-        return $importer->import($pathToImportFile);
+        return $importer->import($pathToImportFile, $discardInvalidFields);
     }
 
     /**

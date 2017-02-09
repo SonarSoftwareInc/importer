@@ -18,9 +18,10 @@ class InventoryImporter extends AccessesSonar
 
     /**
      * @param $pathToImportFile
+     * @param bool $discardInvalidFields - If some field names are invalid, discard them. If this is false, an exception will be thrown instead.
      * @return array
      */
-    public function import($pathToImportFile)
+    public function import($pathToImportFile, $discardInvalidFields = false)
     {
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -46,7 +47,7 @@ class InventoryImporter extends AccessesSonar
                 array_push($validData, $data);
             }
 
-            $requests = function () use ($validData)
+            $requests = function () use ($validData, $discardInvalidFields)
             {
                 foreach ($validData as $validDatum)
                 {
@@ -55,7 +56,7 @@ class InventoryImporter extends AccessesSonar
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
                         ]
-                        , json_encode($this->buildPayload($validDatum)));
+                        , json_encode($this->buildPayload($validDatum, $discardInvalidFields)));
                 }
             };
 
@@ -223,7 +224,7 @@ class InventoryImporter extends AccessesSonar
      * @param $row
      * @return array
      */
-    private function buildPayload($row)
+    private function buildPayload($row, $discardInvalidFields = false)
     {
         $item = [];
 
@@ -276,7 +277,14 @@ class InventoryImporter extends AccessesSonar
                 $value = $row[$i+1];
                 if (!array_key_exists(strtolower(trim($name)),$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]]))
                 {
-                    throw new InvalidArgumentException("The field " . trim($name) . " does not exist for model " . trim($row[2]));
+                    if ($discardInvalidFields === true)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        throw new InvalidArgumentException("The field " . trim($name) . " does not exist for model " . trim($row[2]));
+                    }
                 }
                 $fields[$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]][strtolower(trim($name))]] = trim($value);
             }
