@@ -50,6 +50,8 @@ class AddressValidator extends AccessesSonar
                 'failures' => 0,
                 'failure_log_name' => $failureLogName,
                 'success_log_name' => $successLogName,
+                'cache_hits' => 0,
+                'cache_fails' => 0,
             ];
 
             $addressesWithoutCounty = [];
@@ -62,15 +64,20 @@ class AddressValidator extends AccessesSonar
                 array_push($validData, $data);
             }
 
-            $requests = function () use ($addressesWithoutCounty)
+            $cacheHits = 0;
+            $cacheFails = 0;
+
+            $requests = function () use ($addressesWithoutCounty, &$cacheHits, &$cacheFails)
             {
                 foreach ($addressesWithoutCounty as $addressWithoutCounty)
                 {
                     if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
                     {
+                        $cacheHits++;
                         continue;
                     }
 
+                    $cacheFails++;
                     yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
@@ -146,7 +153,7 @@ class AddressValidator extends AccessesSonar
                     $data = $this->redisClient->get($this->generateAddressKey($addressWithoutCounty));
                     $returnData['successes'] += 1;
                     fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                    fputcsv($tempHandle, $this->mergeRow((array)json_decode($data), $validData[$index]));
+                    fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
                 }
             }
 
@@ -162,6 +169,9 @@ class AddressValidator extends AccessesSonar
         fclose($tempHandle);
         fclose($failureLog);
         fclose($successLog);
+
+        $returnData['cache_hits'] = $cacheHits;
+        $returnData['cache_fails'] = $cacheFails;
 
         return $returnData;
     }
@@ -205,6 +215,7 @@ class AddressValidator extends AccessesSonar
         {
             $currentRow[15] = $validatedAddress['longitude'];
         }
+
         return $currentRow;
     }
 
