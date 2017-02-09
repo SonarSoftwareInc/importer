@@ -145,18 +145,6 @@ class AddressValidator extends AccessesSonar
                 }
             ]);
 
-            //Go through the addresses and check if they are in the cache. If so, add the data to the document.
-            foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
-            {
-                if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
-                {
-                    $data = $this->redisClient->get($this->generateAddressKey($addressWithoutCounty));
-                    $returnData['successes'] += 1;
-                    fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                    fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
-                }
-            }
-
             $promise = $pool->promise();
             $promise->wait();
 
@@ -164,6 +152,18 @@ class AddressValidator extends AccessesSonar
         else
         {
             throw new InvalidArgumentException("File could not be opened.");
+        }
+
+        //Go through the addresses and check if they are in the cache. If so, add the data to the document.
+        foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
+        {
+            if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
+            {
+                $data = $this->redisClient->get($this->generateAddressKey($addressWithoutCounty));
+                $returnData['successes'] += 1;
+                fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
+                fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
+            }
         }
 
         fclose($tempHandle);
