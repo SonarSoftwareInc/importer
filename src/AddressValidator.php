@@ -77,6 +77,8 @@ class AddressValidator extends AccessesSonar
                         continue;
                     }
 
+                    echo "{$this->generateAddressKey($addressWithoutCounty)} doesn't exist!\n";
+
                     $cacheFails++;
                     yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
                             'Content-Type' => 'application/json; charset=UTF8',
@@ -100,6 +102,9 @@ class AddressValidator extends AccessesSonar
                             $returnData['successes'] += 1;
                             fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
                             fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+
+                            $this->redisClient->set($this->generateAddressKey($addressesWithoutCounty[$index]),json_encode($addressAsArray));
+                            $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),18144000);
                         }
                         catch (Exception $e)
                         {
