@@ -15,6 +15,7 @@ class AddressValidator extends AccessesSonar
 {
     private $addressFormatter;
     private $redisClient;
+    private $dataToBeocoded = [];
 
     public function __construct()
     {
@@ -54,8 +55,8 @@ class AddressValidator extends AccessesSonar
                 'cache_fails' => 0,
             ];
 
-            $addressesWithoutCounty = [];
             $addressesWithCounty = [];
+            $addressesWithoutCounty = [];
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
@@ -67,19 +68,19 @@ class AddressValidator extends AccessesSonar
             $cacheHits = 0;
             $cacheFails = 0;
 
-            $requests = function () use ($addressesWithoutCounty, &$cacheHits, &$cacheFails)
+            $requests = function () use ($addressesWithoutCounty, &$cacheHits, &$cacheFails, $validData)
             {
-                foreach ($addressesWithoutCounty as $addressWithoutCounty)
+                foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
                 {
-                    if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
+                    $key = $this->generateAddressKey($validData[$index]);
+                    if ($this->redisClient->exists($key))
                     {
                         $cacheHits++;
                         continue;
                     }
 
-                    echo "{$this->generateAddressKey($addressWithoutCounty)} doesn't exist!\n";
-
                     $cacheFails++;
+                    array_push($this->dataToBeocoded,$validData[$index]);
                     yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
@@ -91,20 +92,19 @@ class AddressValidator extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty, $addressesWithoutCounty)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
                     {
                         //Need to check if the address with county is valid so we can at least use that
                         try {
-                            $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index]);
-                            $returnData['successes'] += 1;
-                            fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                            fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+                            $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
 
-                            $this->redisClient->set($this->generateAddressKey($addressesWithoutCounty[$index]),json_encode($addressAsArray));
-                            $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),18144000);
+                            echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to unvalidated check passing.\n";
+
+                            $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
+                            $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
                         }
                         catch (Exception $e)
                         {
@@ -117,25 +117,24 @@ class AddressValidator extends AccessesSonar
                     }
                     else
                     {
-                        $returnData['successes'] += 1;
-                        fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
                         $addressObject = json_decode($response->getBody()->getContents());
 
-                        $this->redisClient->set($this->generateAddressKey($addressesWithoutCounty[$index]),json_encode((array)$addressObject->data));
-                        $this->redisClient->expire($this->generateAddressKey($addressesWithoutCounty[$index]),18144000);
+                        echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to geocoding working.\n";
 
-                        $addressAsArray = (array)$addressObject->data;
-                        fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+                        $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode((array)$addressObject->data));
+                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
                     }
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $addressesWithCounty, $successLog, $tempHandle)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $successLog, $tempHandle)
                 {
                     //Need to check if the address with county is valid so we can at least use that
                     try {
-                        $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index]);
-                        $returnData['successes'] += 1;
-                        fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                        fputcsv($tempHandle, $this->mergeRow($addressAsArray, $validData[$index]));
+                        $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
+
+                        echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to geocoding puking and it being ok.\n";
+
+                        $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
+                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
                     }
                     catch (Exception $e)
                     {
@@ -162,13 +161,18 @@ class AddressValidator extends AccessesSonar
         //Go through the addresses and check if they are in the cache. If so, add the data to the document.
         foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
         {
-            if ($this->redisClient->exists($this->generateAddressKey($addressWithoutCounty)))
+            if ($this->redisClient->exists($this->generateAddressKey($validData[$index])))
             {
-                $data = $this->redisClient->get($this->generateAddressKey($addressWithoutCounty));
+                $data = $this->redisClient->get($this->generateAddressKey($validData[$index]));
                 $returnData['successes'] += 1;
                 fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
                 fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
             }
+        }
+
+        if (count($validData) != $returnData['successes'] + $returnData['failures'])
+        {
+            echo "WARNING: Validated address count does not match the total addresses entered!\n";
         }
 
         fclose($tempHandle);
@@ -277,17 +281,11 @@ class AddressValidator extends AccessesSonar
 
     /**
      * Generate an address key for caching
-     * @param array $cleanedAddress
+     * @param array $validDatum
      * @return null
      */
-    private function generateAddressKey(array $cleanedAddress)
+    private function generateAddressKey(array $validDatum)
     {
-        $key = null;
-        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['line1']);
-        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['city']);
-        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['state']);
-        $key .= preg_replace("/[^A-Za-z0-9]/", '', $cleanedAddress['zip']);
-
-        return strtolower($key);
+        return strtolower($this->uri . "_" . $validDatum[0]);
     }
 }
