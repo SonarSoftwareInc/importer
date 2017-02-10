@@ -101,8 +101,6 @@ class AddressValidator extends AccessesSonar
                         try {
                             $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
 
-                            echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to unvalidated check passing.\n";
-
                             $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
                             $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
                         }
@@ -119,8 +117,6 @@ class AddressValidator extends AccessesSonar
                     {
                         $addressObject = json_decode($response->getBody()->getContents());
 
-                        echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to geocoding working.\n";
-
                         $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode((array)$addressObject->data));
                         $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
                     }
@@ -130,8 +126,6 @@ class AddressValidator extends AccessesSonar
                     //Need to check if the address with county is valid so we can at least use that
                     try {
                         $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
-
-                        echo "Adding {$this->generateAddressKey($this->dataToBeocoded[$index])} to redis due to geocoding puking and it being ok.\n";
 
                         $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
                         $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
