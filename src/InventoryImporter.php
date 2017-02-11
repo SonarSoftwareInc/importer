@@ -44,6 +44,7 @@ class InventoryImporter extends AccessesSonar
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+                $this->buildPayload($data, $discardInvalidFields);
                 array_push($validData, $data);
             }
 
@@ -222,6 +223,7 @@ class InventoryImporter extends AccessesSonar
     /**
      * Build the API payload
      * @param $row
+     * @param bool $discardInvalidFields - If this is true, invalid fields entered will be silently discarded
      * @return array
      */
     private function buildPayload($row, $discardInvalidFields = false)
