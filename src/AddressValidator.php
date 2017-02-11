@@ -203,7 +203,11 @@ class AddressValidator extends AccessesSonar
         }
         if ($validatedAddress['zip'])
         {
-            $currentRow[12] = $validatedAddress['zip'];
+            //Sometimes, the geocoder will return a shortened ZIP that is invalid. Keep the original one if that happens.
+            if (strlen(str_replace(" ","",$validatedAddress['zip'])) >= strlen(str_replace(" ","",$currentRow[12])))
+            {
+                $currentRow[12] = $validatedAddress['zip'];
+            }
         }
         if ($validatedAddress['country'])
         {
