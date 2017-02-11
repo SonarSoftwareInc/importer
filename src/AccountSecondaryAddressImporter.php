@@ -50,14 +50,7 @@ class AccountSecondaryAddressImporter extends AccessesSonar
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                try {
-                    $this->buildPayload($data, (bool)$validateAddress);
-                }
-                catch (Exception $e)
-                {
-                    echo "Got an exception - {$e->getMessage()}\n";
-                    continue;
-                }
+                $this->buildPayload($data, (bool)$validateAddress);
                 array_push($validData, $data);
             }
 
