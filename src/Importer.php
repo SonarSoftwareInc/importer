@@ -251,16 +251,17 @@ class Importer extends AccessesSonar
 
     /**
      * @param $pathToImportFile - Input the full path to the network IPs associated with MACs CSV file.
+     * @param bool $skipMissing - If this is true, then if a MAC entered in the import doc is not found in Sonar, it will be added to the failures list, but will not throw an Exception.
      * @return array
      */
-    public function importNetworkSiteIPsWithMacAddresses($pathToImportFile)
+    public function importNetworkSiteIPsWithMacAddresses($pathToImportFile, $skipMissing = false)
     {
         set_time_limit(0);
         $this->validateCredentials();
         $this->validateVersion("0.4.2");
 
         $importer = new NetworkIPMacAssignmentImporter();
-        return $importer->import($pathToImportFile);
+        return $importer->import($pathToImportFile, $skipMissing);
     }
 
     /**

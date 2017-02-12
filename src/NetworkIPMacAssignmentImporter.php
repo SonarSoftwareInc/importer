@@ -14,11 +14,13 @@ use SonarSoftware\Importer\Extenders\AccessesSonar;
 class NetworkIPMacAssignmentImporter extends AccessesSonar
 {
     private $existingMacs = [];
+
     /**
      * @param $pathToImportFile
+     * @param bool $skipMissing - If this is true, then if a MAC entered in the import doc is not found in Sonar, it will be added to the failures list, but will not throw an Exception.
      * @return array
      */
-    public function import($pathToImportFile)
+    public function import($pathToImportFile, $skipMissing = false)
     {
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -45,16 +47,30 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
                 array_push($validData, $data);
             }
 
-            $requests = function () use ($validData)
+            $requests = function () use ($validData, $skipMissing, $failureLog, &$returnData)
             {
                 foreach ($validData as $validDatum)
                 {
-                    yield new Request("POST", $this->uri . "/api/v1/network/network_sites/" . trim($validDatum[0]) . "/ip_assignments", [
-                            'Content-Type' => 'application/json; charset=UTF8',
-                            'timeout' => 30,
-                            'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
-                        ]
-                        , json_encode($this->buildPayload($validDatum)));
+                    try {
+                        yield new Request("POST", $this->uri . "/api/v1/network/network_sites/" . trim($validDatum[0]) . "/ip_assignments", [
+                                'Content-Type' => 'application/json; charset=UTF8',
+                                'timeout' => 30,
+                                'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                            ]
+                            , json_encode($this->buildPayload($validDatum)));
+                    }
+                    catch (Exception $e)
+                    {
+                        if ($skipMissing === false)
+                        {
+                            throw new Exception($e->getMessage());
+                        }
+                        else
+                        {
+                            fputcsv($failureLog,"MAC {$validDatum[1]} was not found in Sonar, but skip missing was enabled, so it was skipped.");
+                            $returnData['failures'] += 1;
+                        }
+                    }
                 }
             };
 
@@ -352,27 +368,5 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
         $cleanMac = strtoupper($cleanMac);
         $macSplit = str_split($cleanMac,2);
         return implode(":",$macSplit);
-    }
-
-    /**
-     * @param $row
-     * @return bool
-     */
-    private function importIpAssignment($row)
-    {
-        $payload = $this->buildPayload($row);
-        $response = $this->client->post($this->uri . "/api/v1/network/network_sites/" . trim($row[0]) . "/ip_assignments", [
-            'headers' => [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-            ],
-            'auth' => [
-                $this->username,
-                $this->password,
-            ],
-            'json' => $payload
-        ]);
-
-        return true;
     }
 }
