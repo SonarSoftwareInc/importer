@@ -68,9 +68,9 @@ class InventoryImporter extends AccessesSonar
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
                 {
                     $statusCode = $response->getStatusCode();
+                    $body = json_decode($response->getBody()->getContents());
                     if ($statusCode > 201)
                     {
-                        $body = json_decode($response->getBody()->getContents());
                         $line = $validData[$index];
                         array_push($line,$body);
                         fputcsv($failureLog,$line);
@@ -78,8 +78,17 @@ class InventoryImporter extends AccessesSonar
                     }
                     else
                     {
-                        $returnData['successes'] += 1;
-                        fwrite($successLog,"Import succeeded for ID {$validData[$index][0]}" . "\n");
+                        if (count($body->data->ids) > 0)
+                        {
+                            $returnData['successes'] += 1;
+                            fwrite($successLog,"Import succeeded for ID {$validData[$index][0]}" . "\n");
+                        }
+                        else
+                        {
+                            $line = $validData[$index];
+                            $line[] = "Creation was accepted, but no inventory items were returned.";
+                            fputcsv($failureLog,$line);
+                        }
                     }
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)

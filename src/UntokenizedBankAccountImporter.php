@@ -135,10 +135,16 @@ class UntokenizedBankAccountImporter extends AccessesSonar
      */
     private function buildPayload($data)
     {
+        $routingNumber = trim($data[2]);
+        while (strlen($routingNumber) < 9)
+        {
+            $routingNumber = "0" . $routingNumber;
+        }
+
         return [
             'type' => 'bank account',
             'account_number' => trim($data[1]),
-            'routing_number' => trim($data[2]),
+            'routing_number' => $routingNumber,
             'name_on_account' => trim($data[3]),
             'account_type' => strtolower(trim($data[4])),
             'auto' => (boolean)$data[5],
