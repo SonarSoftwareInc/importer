@@ -116,7 +116,7 @@ class NoteImporter extends AccessesSonar
         $row = 0;
 
         if (($handle = fopen($pathToImportFile, "r")) !== FALSE) {
-            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 $row++;
                 foreach ($requiredColumns as $colNumber) {
                     if (trim($data[$colNumber]) == '') {

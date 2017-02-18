@@ -118,9 +118,9 @@ class CallLogImporter extends AccessesSonar
                         throw new InvalidArgumentException("In the call log import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
                     }
 
-                    if (!is_numeric($data[0]) || !is_numeric($data[1]))
+                    if (!is_numeric($data[0]))
                     {
-                        throw new InvalidArgumentException("In the call log import, either the account ID or custom field ID is not numeric on row $row and they must be.");
+                        throw new InvalidArgumentException("In the call log import, the account ID is not numeric on row $row and it must be.");
                     }
                 }
 

@@ -67,7 +67,7 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
                         }
                         else
                         {
-                            fputcsv($failureLog,"MAC {$validDatum[1]} was not found in Sonar, but skip missing was enabled, so it was skipped.");
+                            fwrite($failureLog,"MAC {$validDatum[1]} was not found in Sonar, but skip missing was enabled, so it was skipped.");
                             $returnData['failures'] += 1;
                         }
                     }
