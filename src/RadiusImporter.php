@@ -107,42 +107,42 @@ class RadiusImporter extends AccessesSonar
                         }
                     }
                 };
-            }
 
-            $pool = new Pool($this->client, $ipRequests(), [
-                'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
-                {
-                    $statusCode = $response->getStatusCode();
-                    $body = json_decode($response->getBody()->getContents());
-
-                    if ($statusCode > 201)
+                $pool = new Pool($this->client, $ipRequests(), [
+                    'concurrency' => 10,
+                    'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
                     {
+                        $statusCode = $response->getStatusCode();
+                        $body = json_decode($response->getBody()->getContents());
+
+                        if ($statusCode > 201)
+                        {
+                            $line = $validData[$index];
+                            array_push($line,$body);
+                            fputcsv($failureLog,$line);
+                            $returnData['failures'] += 1;
+                        }
+                        else
+                        {
+                            $returnData['successes'] += 1;
+                            fwrite($successLog,"IP assignment succeeded for account ID {$validData[$index][0]}" . "\n");
+                        }
+                    },
+                    'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                    {
+                        $response = $reason->getResponse();
+                        $body = json_decode($response->getBody()->getContents());
+                        $returnMessage = implode(", ",(array)$body->error->message);
                         $line = $validData[$index];
-                        array_push($line,$body);
+                        array_push($line,$returnMessage);
                         fputcsv($failureLog,$line);
                         $returnData['failures'] += 1;
                     }
-                    else
-                    {
-                        $returnData['successes'] += 1;
-                        fwrite($successLog,"IP assignment succeeded for account ID {$validData[$index][0]}" . "\n");
-                    }
-                },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
-                {
-                    $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    $returnMessage = implode(", ",(array)$body->error->message);
-                    $line = $validData[$index];
-                    array_push($line,$returnMessage);
-                    fputcsv($failureLog,$line);
-                    $returnData['failures'] += 1;
-                }
-            ]);
+                ]);
 
-            $promise = $pool->promise();
-            $promise->wait();
+                $promise = $pool->promise();
+                $promise->wait();
+            }
         }
         else
         {
