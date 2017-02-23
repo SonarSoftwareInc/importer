@@ -107,7 +107,7 @@ class UntokenizedCreditCardImporter extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,1,2,3,4,5 ];
+        $requiredColumns = [ 0,1,2,3,4,5,6,7,8,9,10 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -142,6 +142,11 @@ class UntokenizedCreditCardImporter extends AccessesSonar
             'account_number' => (int)trim($data[3]),
             'name_on_account' => trim($data[4]),
             'auto' => (boolean)$data[5],
+            'line1' => trim($data[6]),
+            'city' => trim($data[7]),
+            'state' => trim($data[8]),
+            'zip' => trim($data[9]),
+            'country' => trim($data[10]),
         ];
     }
 

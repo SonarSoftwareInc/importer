@@ -108,7 +108,7 @@ class TokenizedCreditCardImporter extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,2,3,4,5,6,7 ];
+        $requiredColumns = [ 0,2,3,4,5,6,7,8,9,10,11,12,13 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -144,6 +144,12 @@ class TokenizedCreditCardImporter extends AccessesSonar
             'expiration_month' => trim($data[5]),
             'auto' => (boolean)$data[6],
             'card_type' => strtolower(trim($data[7])),
+            'name_on_account' => trim($data[8]),
+            'line1' => trim($data[9]),
+            'city' => trim($data[10]),
+            'state' => trim($data[11]),
+            'zip' => trim($data[12]),
+            'country' => trim($data[13]),
         ];
 
         if (trim($data[1]))
