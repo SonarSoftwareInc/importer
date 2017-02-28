@@ -15,7 +15,7 @@ class AddressValidator extends AccessesSonar
 {
     private $addressFormatter;
     private $redisClient;
-    private $dataToBeocoded = [];
+    private $dataToBeImported = [];
 
     public function __construct()
     {
@@ -80,7 +80,7 @@ class AddressValidator extends AccessesSonar
                     }
 
                     $cacheFails++;
-                    array_push($this->dataToBeocoded,$validData[$index]);
+                    array_push($this->dataToBeImported,$validData[$index]);
                     yield new Request("POST", $this->uri . "/api/v1/_data/validate_address", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
@@ -92,17 +92,17 @@ class AddressValidator extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
                     {
                         //Need to check if the address with county is valid so we can at least use that
                         try {
-                            $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
+                            $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index],true);
 
-                            $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
-                            $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
+                            $this->redisClient->set($this->generateAddressKey($this->dataToBeImported[$index]),json_encode($addressAsArray));
+                            $this->redisClient->expire($this->generateAddressKey($this->dataToBeImported[$index]),18144000);
                         }
                         catch (Exception $e)
                         {
@@ -117,18 +117,18 @@ class AddressValidator extends AccessesSonar
                     {
                         $addressObject = json_decode($response->getBody()->getContents());
 
-                        $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode((array)$addressObject->data));
-                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
+                        $this->redisClient->set($this->generateAddressKey($this->dataToBeImported[$index]),json_encode((array)$addressObject->data));
+                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeImported[$index]),18144000);
                     }
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $successLog, $tempHandle)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $successLog, $tempHandle, $addressesWithCounty)
                 {
                     //Need to check if the address with county is valid so we can at least use that
                     try {
-                        $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->cleanAddress($this->dataToBeocoded[$index],true));
+                        $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($addressesWithCounty[$index],true);
 
-                        $this->redisClient->set($this->generateAddressKey($this->dataToBeocoded[$index]),json_encode($addressAsArray));
-                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeocoded[$index]),18144000);
+                        $this->redisClient->set($this->generateAddressKey($this->dataToBeImported[$index]),json_encode($addressAsArray));
+                        $this->redisClient->expire($this->generateAddressKey($this->dataToBeImported[$index]),18144000);
                     }
                     catch (Exception $e)
                     {
@@ -214,11 +214,11 @@ class AddressValidator extends AccessesSonar
             $currentRow[13] = $validatedAddress['country'];
         }
 
-        if (!trim($currentRow[14]))
+        if (!trim($currentRow[14]) && isset($validatedAddress['latitude']))
         {
             $currentRow[14] = $validatedAddress['latitude'];
         }
-        if (!trim($currentRow[15]))
+        if (!trim($currentRow[15]) && isset($validatedAddress['longitude']))
         {
             $currentRow[15] = $validatedAddress['longitude'];
         }
@@ -234,6 +234,10 @@ class AddressValidator extends AccessesSonar
      */
     private function cleanAddress($data, $withCounty = false)
     {
+        if (!isset($data[7]))
+        {
+            print_r($data);
+        }
         return  [
             'line1' => trim($data[7]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv("DEFAULT_CITY"),
