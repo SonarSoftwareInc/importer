@@ -289,7 +289,7 @@ class InventoryImporter extends AccessesSonar
                 //Field Name
                 $name = $row[$i];
                 $value = $row[$i+1];
-                if (!array_key_exists(strtolower(trim($name)),$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]]))
+                if (!array_key_exists(strtolower(trim($name)),$this->fieldNames[$this->modelNames[strtolower($modelName)]]))
                 {
                     if ($discardInvalidFields === true)
                     {
@@ -297,10 +297,10 @@ class InventoryImporter extends AccessesSonar
                     }
                     else
                     {
-                        throw new InvalidArgumentException("The field " . trim($name) . " does not exist for model " . trim($row[2]));
+                        throw new InvalidArgumentException("The field " . trim($name) . " does not exist for model " . $modelName);
                     }
                 }
-                $fields[$this->fieldNames[$this->modelNames[strtolower(trim($row[2]))]][strtolower(trim($name))]] = trim($value);
+                $fields[$this->fieldNames[$this->modelNames[strtolower($modelName)]][strtolower(trim($name))]] = trim($value);
             }
         }
 
