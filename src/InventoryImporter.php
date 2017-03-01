@@ -244,7 +244,7 @@ class InventoryImporter extends AccessesSonar
 
         if (!array_key_exists(strtolower($modelName),$this->modelNames))
         {
-            throw new InvalidArgumentException("The model " . trim($row[2]) . " does not exist in Sonar.");
+            throw new InvalidArgumentException("The model $modelName does not exist in Sonar.");
         }
 
         $item["assignee_id"] = $row[0];
