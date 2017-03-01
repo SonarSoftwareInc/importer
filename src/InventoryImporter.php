@@ -310,5 +310,3 @@ class InventoryImporter extends AccessesSonar
         return $item;
     }
 }
-
-while (($data = fgetcsv($handle, 8096, ",",'"',"\\")) !== FALSE) {                                                          print_r($data);                                                                                                                }
