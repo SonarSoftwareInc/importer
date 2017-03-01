@@ -239,14 +239,17 @@ class InventoryImporter extends AccessesSonar
     {
         $item = [];
 
-        if (!array_key_exists(strtolower(trim($row[2])),$this->modelNames))
+        $modelName = trim($row[2]);
+        $modelName = str_replace('\"','"',$modelName);
+
+        if (!array_key_exists(strtolower($modelName),$this->modelNames))
         {
             throw new InvalidArgumentException("The model " . trim($row[2]) . " does not exist in Sonar.");
         }
 
         $item["assignee_id"] = $row[0];
         $item["assignee_type"] = $row[1];
-        $item["model_id"] = $this->modelNames[strtolower(trim($row[2]))];
+        $item["model_id"] = $this->modelNames[strtolower($modelName)];
         if (array_key_exists(3,$row))
         {
             if (in_array($row[3],['new','used']))
@@ -307,3 +310,5 @@ class InventoryImporter extends AccessesSonar
         return $item;
     }
 }
+
+while (($data = fgetcsv($handle, 8096, ",",'"',"\\")) !== FALSE) {                                                          print_r($data);                                                                                                                }
