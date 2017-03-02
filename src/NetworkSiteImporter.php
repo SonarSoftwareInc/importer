@@ -160,6 +160,8 @@ class NetworkSiteImporter extends AccessesSonar
             }
         }
 
+        $payload['height_in_meters'] = (float)$data[9];
+
         return $payload;
     }
 
