@@ -55,7 +55,7 @@ class RadiusImporter extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, &$radiusAccountIDsByUsername)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData)
                 {
                     $statusCode = $response->getStatusCode();
                     $body = json_decode($response->getBody()->getContents());
@@ -89,7 +89,7 @@ class RadiusImporter extends AccessesSonar
             $promise = $pool->promise();
             $promise->wait();
 
-            if (count($radiusAccountIDsByUsername) > 0)
+            if (count($this->radiusAccountIDsByUsername) > 0)
             {
                 //Associate IPs with usernames if required now.
                 $ipRequests = function () use ($validData)
