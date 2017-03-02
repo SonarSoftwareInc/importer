@@ -248,6 +248,7 @@ class TicketImporter extends AccessesSonar
             'due_date' => $line[4] ? $carbon->toDateString() : null,
             'priority' => trim($line[5]) ? trim($line[5]) : 4,
             'comment' => $line[7],
+            'open' => $line[9] == 1 ? true : false,
         ];
 
         if ($line[3])
