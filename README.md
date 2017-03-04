@@ -38,7 +38,7 @@ All the importers described below use a template from the **templates** folder.
 Your CSV files should be comma separated. Each column must be included, even if it is optional. An optional column can just have no data entered. Strings should be wrapped in double quotes and double quotes inside strings should be escaped with a backslash.
 
 ###How to use
-To use the importer, run the `importer` command line tool by typing `php importer` from the directory you unzipped the importer into. Select an option from the menu and you will be prompted for further information. **Make sure you run your account importers through the 'Validate Addresses' function before importing!**
+To use the importer, run the `importer` command line tool by typing `php importer` from the directory you unzipped the importer into. Select an option from the menu and you will be prompted for further information. **Make sure you run your accounts CSV through the 'Validate Addresses' function before importing!**
 
 ###Importer output
 Assuming there are no fatal errors (which will throw an exception) the importer will write logs into the **log_output** folder. This folder will contain a fail and success log file, which will report any failures, as well as successes. An import is
