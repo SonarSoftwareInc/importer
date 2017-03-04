@@ -225,7 +225,7 @@ class Importer extends AccessesSonar
      * @param $pathToImportFile - Input the full path to the account IPs associated with MACs CSV file.
      * @return array
      */
-    public function importAccountIPsWithMacAddresses($pathToImportFile)
+    public function importAccountIpsWithMacAddresses($pathToImportFile)
     {
         set_time_limit(0);
         $this->validateCredentials();
@@ -239,7 +239,7 @@ class Importer extends AccessesSonar
      * @param $pathToImportFile - Input the full path to the account IPs CSV file.
      * @return array
      */
-    public function importAccountIPs($pathToImportFile)
+    public function importAccountIps($pathToImportFile)
     {
         set_time_limit(0);
         $this->validateCredentials();
@@ -254,7 +254,7 @@ class Importer extends AccessesSonar
      * @param bool $skipMissing - If this is true, then if a MAC entered in the import doc is not found in Sonar, it will be added to the failures list, but will not throw an Exception.
      * @return array
      */
-    public function importNetworkSiteIPsWithMacAddresses($pathToImportFile, $skipMissing = false)
+    public function importNetworkSiteIpsWithMacAddresses($pathToImportFile, $skipMissing = false)
     {
         set_time_limit(0);
         $this->validateCredentials();
@@ -268,7 +268,7 @@ class Importer extends AccessesSonar
      * @param $pathToImportFile - Input the full path to the network IP assignment CSV file.
      * @return array
      */
-    public function importNetworkSiteIPs($pathToImportFile)
+    public function importNetworkSiteIps($pathToImportFile)
     {
         set_time_limit(0);
         $this->validateCredentials();
