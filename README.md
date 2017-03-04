@@ -1,7 +1,7 @@
 # Sonar Importer
 This PHP library uses the Sonar API to import data from a standard format into Sonar.
 
-###If you do not have a background in software development, you are not expected to use this tool yourself. Feel free to contact us at support@sonar.software for assistance.
+###This tool is fairly technical. If you don't feel comfortable using this tool yourself, please contact onboarding@sonar.software and we're happy to assist.
 
 ##Installing
 Download this tool by clicking [here](https://github.com/SonarSoftware/importer/archive/master.zip). Unzip it, and enter the folder.
