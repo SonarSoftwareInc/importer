@@ -1,21 +1,22 @@
 # Sonar Importer
 This PHP library uses the Sonar API to import data from a standard format into Sonar.
 
-###This tool is fairly technical. If you don't feel comfortable using this tool yourself, please contact onboarding@sonar.software and we're happy to assist.
+###This tool is fairly technical. If you don't feel comfortable using this tool yourself, please contact onboarding@sonar.software for assistance.
 
 ##Installing
-Download this tool by clicking [here](https://github.com/SonarSoftware/importer/archive/master.zip). Unzip it, and enter the folder.
-
-**The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.**
-
-###Setup
-To setup the importer for use, create a .env file in the `importer` directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
-that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
 
 ###Notes
 This tool has been built and tested on Linux, specifically Ubuntu, although it is likely to function on any Linux distribution. It has not been tested on any other operating system.
 
-Although this importer should work with PHP 5.5+, I recommend using PHP7 for the best performance. If you're using Ubuntu 16.x, you will have PHP7 installed by default.
+The importer itself is written in PHP. Although this importer should work with PHP 5.5+, I recommend using PHP7 for the best performance. If you're using Ubuntu 16.x, you will have PHP7 installed by default.
+
+###Setup
+Download this tool by clicking [here](https://github.com/SonarSoftware/importer/archive/master.zip). Unzip it, and enter the folder.
+
+**The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.**
+
+To setup the importer for use, create a .env file in the `importer` directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
+that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
 
 ##Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
