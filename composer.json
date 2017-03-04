@@ -18,7 +18,8 @@
     "vlucas/phpdotenv": "^2.2",
     "nesbot/carbon": "^1.21",
     "leth/ip-address": "^1.1",
-    "predis/predis": "^1.1"
+    "predis/predis": "^1.1",
+    "league/climate": "^3.2"
   },
   "autoload": {
     "psr-4" : {
