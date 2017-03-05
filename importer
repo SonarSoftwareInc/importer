@@ -16,6 +16,8 @@ if ($input->prompt() != 'y') {
     return;
 }
 
+$climate->backgroundRed()->bold()->lightGray()->out("Before importing accounts, you must run the 'Validate Addresses' tool under the 'tools' menu!");
+
 prompt($climate);
 
 /**
@@ -37,50 +39,117 @@ function loadDotenv()
 /**
  * Prompt at the main menu for input
  * @param CLImate $climate
+ * @param null $innerOption
  */
-function prompt(CLImate $climate)
+function prompt(CLImate $climate, $innerOption = null)
 {
-    $options = [
-        'validate' => 'Validate Addresses',
-        'accounts' => 'Import Accounts',
-        'accountBillingParameters' => 'Import Account Billing Parameters',
-        'accountCustomFields' => 'Import Account Custom Fields',
-        'accountFiles' => 'Import Account Files',
-        'accountIps' => 'Import Account IP Addresses',
-        'accountIpsWithMacAddresses' => 'Import Account IP Address/MAC combinations',
-        'accountNotes' => 'Import Account Notes',
-        'accountPackages' => 'Import Account Packages',
-        'accountSecondaryAddresses' => 'Import Account Secondary Addresses',
-        'accountServices' => 'Import Account Services',
-        'callLogs' => 'Import Call Logs',
-        'contacts' => 'Import Contacts',
-        'inventoryItems' => 'Import Inventory Items',
-        'ipPools' => 'Import IP Pools',
-        'networkSites' => 'Import Network Sites',
-        'networkSiteIps' => 'Import Network Site IP Addresses',
-        'networkSiteIpsWithMacAddresses' => 'Import Network Site IP Address/MAC combinations',
-        'radiusAccounts' => 'Import RADIUS Accounts',
-        'scheduledJobs' => 'Import Scheduled Jobs',
-        'services' => 'Import Services',
-        'subnets' => 'Import Subnets',
-        'tickets' => 'Import Tickets',
-        'tokenizedBankAccounts' => 'Import Tokenized Bank Accounts',
-        'untokenizedBankAccounts' => 'Import Untokenized Bank Accounts',
-        'tokenizedCreditCards' => 'Import Tokenized Credit Cards',
-        'untokenizedCreditCards' => 'Import Untokenized Credit Cards',
-        'updateBalances' => 'Update Balances',
-        'flush' => 'Flush Address Cache',
-        'quit' => 'Quit',
-    ];
-
-    $input = $climate->lightGreen()->radio('Please select an action to perform.',$options);
-    $response = $input->prompt();
-
-    if (isset($options[$response]))
+    if ($innerOption === null)
     {
-        $climate->lightGray()->out("OK - running the '{$options[$response]}' tool.");
+        $options = [
+            'account' => 'Accounts',
+            'financial' => 'Financial',
+            'inventory' => 'Inventory',
+            'ipam' => 'IPAM',
+            'networkSites' => 'Network Sites',
+            'scheduling' => 'Scheduling',
+            'tickets' => 'Tickets',
+            'tools' => 'Tools',
+            'quit' => 'Quit',
+        ];
+
+        $input = $climate->lightGreen()->radio('Please select an action to perform.',$options);
+        $response = $input->prompt();
+
+        prompt($climate, $response);
     }
 
+    $color = 'lightGray';
+
+    switch ($innerOption)
+    {
+        case "account":
+            $options = [
+                'accounts' => 'Import Accounts',
+                'accountBillingParameters' => 'Import Account Billing Parameters',
+                'accountCustomFields' => 'Import Account Custom Fields',
+                'accountFiles' => 'Import Account Files',
+                'accountIps' => 'Import Account IP Addresses',
+                'accountIpsWithMacAddresses' => 'Import Account IP Address/MAC combinations',
+                'accountNotes' => 'Import Account Notes',
+                'accountPackages' => 'Import Account Packages',
+                'accountSecondaryAddresses' => 'Import Account Secondary Addresses',
+                'accountServices' => 'Import Account Services',
+                'callLogs' => 'Import Call Logs',
+                'contacts' => 'Import Contacts',
+                'radiusAccounts' => 'Import RADIUS Accounts',
+                'tokenizedBankAccounts' => 'Import Tokenized Bank Accounts',
+                'untokenizedBankAccounts' => 'Import Untokenized Bank Accounts',
+                'tokenizedCreditCards' => 'Import Tokenized Credit Cards',
+                'untokenizedCreditCards' => 'Import Untokenized Credit Cards',
+                'updateBalances' => 'Update Balances',
+            ];
+            $color = 'lightBlue';
+            break;
+        case "networkSites":
+            $options = [
+                'networkSites' => 'Import Network Sites',
+                'networkSiteIps' => 'Import Network Site IP Addresses',
+                'networkSiteIpsWithMacAddresses' => 'Import Network Site IP Address/MAC combinations',
+            ];
+            $color = 'lightRed';
+            break;
+        case "scheduling":
+            $options = [
+                'scheduledJobs' => 'Import Scheduled Jobs',
+            ];
+            $color = 'lightYellow';
+            break;
+        case "tools":
+            $options = [
+                'validate' => 'Validate Addresses',
+                'flush' => 'Flush Address Cache',
+            ];
+            $color = 'lightMagenta';
+            break;
+        case "inventory":
+            $options = [
+                'inventoryItems' => 'Import Inventory Items',
+            ];
+            $color = 'lightCyan';
+            break;
+        case "ipam":
+            $options = [
+                'ipPools' => 'Import IP Pools',
+                'subnets' => 'Import Subnets',
+            ];
+            $color = 'white';
+            break;
+        case "financial":
+            $options = [
+                'services' => 'Import Services',
+            ];
+            $color = 'yellow';
+            break;
+        case "tickets":
+            $options = [
+                'tickets' => 'Import Tickets',
+            ];
+            $color = 'magenta';
+            break;
+        case "quit":
+            $climate->lightGreen()->out('Goodbye.');
+            die();
+            break;
+    }
+
+    $options['back'] = "Back to the main menu.";
+    $input = $climate->$color()->radio('Please select an action to perform.',$options);
+    $response = $input->prompt();
+    runInnerResponse($climate, $response);
+}
+
+function runInnerResponse(CLImate $climate, $response)
+{
     switch ($response)
     {
         case "validate":
@@ -120,9 +189,8 @@ function prompt(CLImate $climate)
         case "flush":
             flushAddressCache($climate);
             break;
-        case "quit":
-            $climate->lightGreen()->out('Goodbye.');
-            return;
+        case "back":
+            prompt($climate);
             break;
         default:
             $climate->red()->out("Sorry, $response is not a valid selection. Please try again.");
@@ -136,6 +204,7 @@ function prompt(CLImate $climate)
  */
 function updateBalances(CLImate $climate)
 {
+    $climate->lightGray()->out("OK, running the update balances tool!");
     $input = $climate->lightGreen()->input("Please enter the complete path to the account balances file:");
     $filename = $input->prompt();
     if (!file_exists($filename))
@@ -191,6 +260,9 @@ function updateBalances(CLImate $climate)
 function importGeneric(CLImate $climate, $entity)
 {
     $friendlyName = strtolower(implode(" ",preg_split('/(?=[A-Z])/',$entity)));
+
+    $climate->lightGray()->out("OK, running the $friendlyName tool!");
+
     $input = $climate->lightGreen()->input("Please enter the complete path to the $friendlyName file:");
     $filename = $input->prompt();
     if (!file_exists($filename))
@@ -243,6 +315,7 @@ function flushAddressCache(CLImate $climate)
  */
 function validateAddresses(CLImate $climate)
 {
+    $climate->lightGray()->out("OK, let's validate addresses.");
     $input = $climate->lightGreen()->input("Please enter the complete path to the accounts CSV file:");
     $filename = $input->prompt();
     if (!file_exists($filename))
