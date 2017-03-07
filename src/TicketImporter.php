@@ -243,7 +243,7 @@ class TicketImporter extends AccessesSonar
             'subject' => $line[0],
             'type' => 'internal',
             'ticket_group_id' => $line[1],
-            'category_ids' => explode(",",$line[6]),
+            'category_ids' => isset($line[6]) ? explode(",",$line[6]) : null,
             'user_id' => $line[2],
             'due_date' => $line[4] ? $carbon->toDateString() : null,
             'priority' => trim($line[5]) ? trim($line[5]) : 4,
