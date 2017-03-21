@@ -160,6 +160,7 @@ class AccountDidImporter extends AccessesSonar
                     $serviceArray[$datum->id] = [
                         'type' => $datum->type,
                         'application' => $datum->application,
+                        'voice_service' => $datum->voice_service,
                     ];
                 }
             }
@@ -194,7 +195,7 @@ class AccountDidImporter extends AccessesSonar
                     throw new InvalidArgumentException("In the account DID import, row $row references service ID {$data[2]} and that is not a valid service ID.");
                 }
 
-                if ($this->services[$data[2]]['type'] != "voice")
+                if ($this->services[$data[2]]['voice_service'] != 1)
                 {
                     throw new InvalidArgumentException("In the account DID import, row $row references service ID {$data[2]} and that is not a voice service.");
                 }
