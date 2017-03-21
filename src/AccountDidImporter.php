@@ -134,6 +134,7 @@ class AccountDidImporter extends AccessesSonar
                 $serviceArray[$datum->id] = [
                     'type' => $datum->type,
                     'application' => $datum->application,
+                    'voice_service' => $datum->voice_service,
                 ];
             }
         }
