@@ -2,31 +2,25 @@
 
 namespace SonarSoftware\Importer;
 
-use Exception;
-use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
-use GuzzleHttp\Exception\ClientException;
 use SonarSoftware\Importer\Extenders\AccessesSonar;
 
-class AccountPackageImporter extends AccessesSonar
+class AccountDidImporter extends AccessesSonar
 {
-    /**
-     * @param $pathToImportFile
-     * @return array
-     */
+    private $services;
+
     public function import($pathToImportFile)
     {
         if (($handle = fopen($pathToImportFile,"r")) !== FALSE)
         {
-            $this->loadPackageData();
             $this->validateImportFile($pathToImportFile);
 
-            $failureLogName = tempnam(getcwd() . "/log_output","account_package_import_failures");
+            $failureLogName = tempnam(getcwd() . "/log_output","account_did_import_failures");
             $failureLog = fopen($failureLogName,"w");
 
-            $successLogName = tempnam(getcwd() . "/log_output","account_package_import_successes");
+            $successLogName = tempnam(getcwd() . "/log_output","account_did_import_successes");
             $successLog = fopen($successLogName,"w");
 
             $returnData = [
@@ -46,7 +40,7 @@ class AccountPackageImporter extends AccessesSonar
             {
                 foreach ($validData as $validDatum)
                 {
-                    yield new Request("POST", $this->uri . "/api/v1/accounts/" . (int)trim($validDatum[0]) . "/packages", [
+                    yield new Request("POST", $this->uri . "/api/v1/accounts/" . (int)trim($validDatum[0]) . "/dids", [
                             'Content-Type' => 'application/json; charset=UTF8',
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
@@ -102,46 +96,26 @@ class AccountPackageImporter extends AccessesSonar
         return $returnData;
     }
 
-    /**
-     * @param $pathToImportFile
-     */
-    private function validateImportFile($pathToImportFile)
+    private function buildPayload($data)
     {
-        $requiredColumns = [ 0,1 ];
+        $payload = [
+            'did' => trim($data[1]),
+            'service_id' => trim($data[2]),
+        ];
 
-        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
-        {
-            $row = 0;
-            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
-                $row++;
-                foreach ($requiredColumns as $colNumber) {
-                    if (trim($data[$colNumber]) == '') {
-                        throw new InvalidArgumentException("In the account package import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
-                    }
-                }
-
-                if (!array_key_exists($data[1],$this->packages))
-                {
-                    throw new InvalidArgumentException("Package ID {$data[1]} does not exist.");
-                }
-            }
-        }
-        else
-        {
-            throw new InvalidArgumentException("Could not open import file.");
-        }
-
-        return;
+        return $payload;
     }
 
     /**
-     * Load available packages
+     * Load service data into a private var.
      */
-    private function loadPackageData()
+    private function loadServiceData()
     {
-        $packageArray = [];
+        $serviceArray = [];
 
-        $response = $this->client->get($this->uri . "/api/v1/system/packages", [
+        $page = 1;
+
+        $response = $this->client->get($this->uri . "/api/v1/system/services?page=$page", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
                 'timeout' => 30,
@@ -155,14 +129,19 @@ class AccountPackageImporter extends AccessesSonar
         $objResponse = json_decode($response->getBody());
         foreach ($objResponse->data as $datum)
         {
-            $packageArray[$datum->id] = [
-                'name' => $datum->name,
-            ];
+            if ($datum->type == "recurring" || $datum->type == "expiring")
+            {
+                $serviceArray[$datum->id] = [
+                    'type' => $datum->type,
+                    'application' => $datum->application,
+                ];
+            }
         }
 
         while ($objResponse->paginator->current_page != $objResponse->paginator->total_pages)
         {
-            $response = $this->client->get($this->uri . "/api/v1/system/packages", [
+            $page++;
+            $response = $this->client->get($this->uri . "/api/v1/system/services?page=$page", [
                 'headers' => [
                     'Content-Type' => 'application/json; charset=UTF8',
                     'timeout' => 30,
@@ -176,22 +155,56 @@ class AccountPackageImporter extends AccessesSonar
             $objResponse = json_decode($response->getBody());
             foreach ($objResponse->data as $datum)
             {
-                $packageArray[$datum->id] = [
-                    'name' => $datum->name,
-                ];
+                if ($datum->type == "recurring" || $datum->type == "expiring")
+                {
+                    $serviceArray[$datum->id] = [
+                        'type' => $datum->type,
+                        'application' => $datum->application,
+                    ];
+                }
             }
         }
 
-        $this->packages = $packageArray;
+        $this->services = $serviceArray;
     }
 
-    private function buildPayload($data)
+    private function validateImportFile($pathToImportFile)
     {
-        $payload = [
-            'package_id' => (int)trim($data[1]),
-            'prorate' => false
-        ];
+        $this->loadServiceData();
+        $requiredColumns = [ 0,1,2 ];
 
-        return $payload;
+        if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
+        {
+            $row = 0;
+            while (($data = fgetcsv($fileHandle, 8096, ",")) !== FALSE) {
+                $row++;
+                foreach ($requiredColumns as $colNumber) {
+                    if (trim($data[$colNumber]) == '') {
+                        throw new InvalidArgumentException("In the account DID import, column number " . ($colNumber + 1) . " is required, and it is empty on row $row.");
+                    }
+                }
+
+                if (strlen($data[1]) != 10)
+                {
+                    throw new InvalidArgumentException("In the account DID import, row $row contains a " . strlen($data[1]) . " digit DID, and all DIDs must be 10 digits.");
+                }
+
+                if (!isset($this->services[$data[2]]))
+                {
+                    throw new InvalidArgumentException("In the account DID import, row $row references service ID {$data[2]} and that is not a valid service ID.");
+                }
+
+                if ($this->services[$data[2]]['type'] != "voice")
+                {
+                    throw new InvalidArgumentException("In the account DID import, row $row references service ID {$data[2]} and that is not a voice service.");
+                }
+            }
+        }
+        else
+        {
+            throw new InvalidArgumentException("Could not open import file.");
+        }
+
+        return;
     }
 }

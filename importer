@@ -72,6 +72,7 @@ function prompt(CLImate $climate, $innerOption = null)
                 'accounts' => 'Import Accounts',
                 'accountBillingParameters' => 'Import Account Billing Parameters',
                 'accountCustomFields' => 'Import Account Custom Fields',
+                'accountDids' => 'Import Account DIDs',
                 'accountFiles' => 'Import Account Files',
                 'accountIps' => 'Import Account IP Addresses',
                 'accountIpsWithMacAddresses' => 'Import Account IP Address/MAC combinations',
@@ -181,6 +182,7 @@ function runInnerResponse(CLImate $climate, $response)
         case "callLogs":
         case "tickets":
         case "networkSiteIps":
+        case "accountDids":
             importGeneric($climate,$response);
             break;
         case "updateBalances":
