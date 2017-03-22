@@ -44,7 +44,7 @@ class TicketImporter extends AccessesSonar
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 array_push($validData, $data);
                 $additionalCommentsForThisTicket = [];
-                $i = 8;
+                $i = 9;
                 while (isset($data[$i]))
                 {
                     if (trim($data[$i]) == null)
@@ -248,7 +248,7 @@ class TicketImporter extends AccessesSonar
             'due_date' => $line[4] ? $carbon->toDateString() : null,
             'priority' => trim($line[5]) ? trim($line[5]) : 4,
             'comment' => $line[7],
-            'open' => $line[9] == 1 ? true : false,
+            'open' => $line[8] == 1 ? true : false,
         ];
 
         if ($line[3])
