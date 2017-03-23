@@ -134,7 +134,8 @@ class AddressValidator extends AccessesSonar
                     {
                         $response = $reason->getResponse();
                         $body = json_decode($response->getBody()->getContents());
-                        $returnMessage = implode(", ",(array)$body->error->message);
+                        $message = $body->error->message;
+                        $returnMessage = implode(", ",(array)$message);
                         $line = $validData[$index];
                         array_push($line,$returnMessage);
                         fputcsv($failureLog,$line);
