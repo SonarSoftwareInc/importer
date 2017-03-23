@@ -107,7 +107,7 @@ class TokenizedBankAccountImporter extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 0,2,3,4 ];
+        $requiredColumns = [ 0,2,3,4,5 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
@@ -140,6 +140,7 @@ class TokenizedBankAccountImporter extends AccessesSonar
             'type' => 'echeck',
             'identifier' => trim($data[3]),
             'auto' => (boolean)$data[4],
+            'name_on_account' => trim($data[5]),
         ];
 
         if (trim($data[1]))
