@@ -253,7 +253,7 @@ class ServiceImporter extends AccessesSonar
                 {
                     if (trim($data[7]))
                     {
-                        if (!is_numeric(trim($data[7])) || trim($data[7]) < 9)
+                        if (!is_numeric(trim($data[7])) || trim($data[7]) < 8)
                         {
                             throw new InvalidArgumentException(trim($data[7]) . " is not a valid download in kilobits, it must be numeric and greater than or equal to 8.");
                         }
@@ -261,7 +261,7 @@ class ServiceImporter extends AccessesSonar
 
                     if (trim($data[8]))
                     {
-                        if (!is_numeric(trim($data[8])) || trim($data[8]) < 9)
+                        if (!is_numeric(trim($data[8])) || trim($data[8]) < 8)
                         {
                             throw new InvalidArgumentException(trim($data[8]) . " is not a valid upload in kilobits, it must be numeric and greater than or equal to 8.");
                         }
