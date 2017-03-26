@@ -59,7 +59,7 @@ class AddressValidator extends AccessesSonar
             $addressesWithoutCounty = [];
             $validData = [];
 
-            while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
+            while (($data = fgetcsv($handle, 32384, ",")) !== FALSE) {
                 array_push($addressesWithoutCounty, $this->cleanAddress($data,false));
                 array_push($addressesWithCounty, $this->cleanAddress($data,true));
                 array_push($validData, $data);
@@ -91,7 +91,7 @@ class AddressValidator extends AccessesSonar
             };
 
             $pool = new Pool($this->client, $requests(), [
-                'concurrency' => 10,
+                'concurrency' => 20,
                 'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $tempHandle, $addressFormatter, $addressesWithCounty)
                 {
                     $statusCode = $response->getStatusCode();
@@ -109,7 +109,11 @@ class AddressValidator extends AccessesSonar
                             $body = json_decode($response->getBody()->getContents());
                             $line = $validData[$index];
                             array_push($line,$body);
-                            fputcsv($failureLog,$line);
+                            $result = fputcsv($failureLog,$line);
+                            while ($result === false)
+                            {
+                                $result = fputcsv($failureLog,$line);
+                            }
                             $returnData['failures'] += 1;
                         }
                     }
@@ -132,13 +136,23 @@ class AddressValidator extends AccessesSonar
                     }
                     catch (Exception $e)
                     {
-                        $response = $reason->getResponse();
-                        $body = json_decode($response->getBody()->getContents());
-                        $message = $body->error->message;
-                        $returnMessage = implode(", ",(array)$message);
+                        try {
+                            $response = $reason->getResponse();
+                            $body = json_decode($response->getBody()->getContents());
+                            $message = $body->error->message;
+                            $returnMessage = implode(", ",(array)$message);
+                        }
+                        catch (Exception $e)
+                        {
+                            $returnMessage = $e->getMessage();
+                        }
                         $line = $validData[$index];
                         array_push($line,$returnMessage);
-                        fputcsv($failureLog,$line);
+                        $result = fputcsv($failureLog,$line);
+                        while ($result === false)
+                        {
+                            $result = fputcsv($failureLog,$line);
+                        }
                         $returnData['failures'] += 1;
                     }
                 }
@@ -154,14 +168,18 @@ class AddressValidator extends AccessesSonar
         }
 
         //Go through the addresses and check if they are in the cache. If so, add the data to the document.
-        foreach ($addressesWithoutCounty as $index => $addressWithoutCounty)
+        foreach ($validData as $index => $validDatum)
         {
-            if ($this->redisClient->exists($this->generateAddressKey($validData[$index])))
+            if ($this->redisClient->exists($this->generateAddressKey($validDatum)))
             {
-                $data = $this->redisClient->get($this->generateAddressKey($validData[$index]));
+                $data = $this->redisClient->get($this->generateAddressKey($validDatum));
                 $returnData['successes'] += 1;
                 fwrite($successLog,"Validation succeeded for ID {$validData[$index][0]}" . "\n");
-                fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
+                $result = fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
+                while ($result === false)
+                {
+                    $result = fputcsv($tempHandle, $this->mergeRow(json_decode($data,true), $validData[$index]));
+                }
             }
         }
 
