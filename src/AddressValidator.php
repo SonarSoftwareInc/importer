@@ -131,6 +131,21 @@ class AddressValidator extends AccessesSonar
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $successLog, $tempHandle, $addressesWithCounty)
                 {
+                    $returnMessage = "An unknown error occurred.";
+                    $response = $reason->getResponse();
+                    $body = json_decode($response->getBody()->getContents());
+                    if ($body !== null)
+                    {
+                        try {
+                            $message = $body->error->message;
+                            $returnMessage = implode(", ",(array)$message);
+                        }
+                        catch (Exception $e)
+                        {
+                            //
+                        }
+                    }
+
                     //Need to check if the address with county is valid so we can at least use that
                     try {
                         $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->dataToBeImported[$index]['with_county'],true);
@@ -140,25 +155,17 @@ class AddressValidator extends AccessesSonar
                     }
                     catch (Exception $e)
                     {
-                        try {
-                            $response = $reason->getResponse();
-                            $body = json_decode($response->getBody()->getContents());
-                            $message = $body->error->message;
-                            $returnMessage = implode(", ",(array)$message);
-                        }
-                        catch (Exception $e)
-                        {
-                            $returnMessage = $e->getMessage();
-                        }
-                        $line = $this->dataToBeImported[$index]['raw'];
-                        array_push($line,$returnMessage);
-                        $result = fputcsv($failureLog,$line);
-                        while ($result === false)
-                        {
-                            $result = fputcsv($failureLog,$line);
-                        }
-                        $returnData['failures'] += 1;
+                        $returnMessage = $e->getMessage();
                     }
+
+                    $line = $this->dataToBeImported[$index]['raw'];
+                    array_push($line,$returnMessage);
+                    $result = fputcsv($failureLog,$line);
+                    while ($result === false)
+                    {
+                        $result = fputcsv($failureLog,$line);
+                    }
+                    $returnData['failures'] += 1;
                 }
             ]);
 
