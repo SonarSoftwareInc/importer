@@ -183,9 +183,12 @@ class AddressValidator extends AccessesSonar
             }
         }
 
-        if (count($validData) != $returnData['successes'] + $returnData['failures'])
+        $fp = file($tempFile, FILE_SKIP_EMPTY_LINES);
+        $fp2 = file($failureLogName, FILE_SKIP_EMPTY_LINES);
+
+        if (count($validData) != count($fp) + count($fp2))
         {
-            echo "WARNING: Validated address count does not match the total addresses entered!\n";
+            echo "WARNING: Validated address count does not match the total addresses entered! There was " . count($validData) . " lines entered, but we are returning " . count($fp) . " successes and " . count($fp2) . " failures.\n";
         }
 
         fclose($tempHandle);
