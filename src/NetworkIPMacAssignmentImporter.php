@@ -344,14 +344,6 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
             }
         }
 
-        if (array_key_exists(4, $row))
-        {
-            if (is_numeric($row[4]))
-            {
-                $payload['service_id'] = (int)trim($row[4]);
-            }
-        }
-
         return $payload;
     }
 
