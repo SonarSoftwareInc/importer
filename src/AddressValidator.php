@@ -131,21 +131,6 @@ class AddressValidator extends AccessesSonar
                 },
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData, $addressFormatter, $successLog, $tempHandle, $addressesWithCounty)
                 {
-                    $returnMessage = "An unknown error occurred.";
-                    $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    if ($body !== null)
-                    {
-                        try {
-                            $message = $body->error->message;
-                            $returnMessage = implode(", ",(array)$message);
-                        }
-                        catch (Exception $e)
-                        {
-                            //
-                        }
-                    }
-
                     //Need to check if the address with county is valid so we can at least use that
                     try {
                         $addressAsArray = $addressFormatter->doChecksOnUnvalidatedAddress($this->dataToBeImported[$index]['with_county'],true);
@@ -156,16 +141,15 @@ class AddressValidator extends AccessesSonar
                     catch (Exception $e)
                     {
                         $returnMessage = $e->getMessage();
-                    }
-
-                    $line = $this->dataToBeImported[$index]['raw'];
-                    array_push($line,$returnMessage);
-                    $result = fputcsv($failureLog,$line);
-                    while ($result === false)
-                    {
+                        $line = $this->dataToBeImported[$index]['raw'];
+                        array_push($line,$returnMessage);
                         $result = fputcsv($failureLog,$line);
+                        while ($result === false)
+                        {
+                            $result = fputcsv($failureLog,$line);
+                        }
+                        $returnData['failures'] += 1;
                     }
-                    $returnData['failures'] += 1;
                 }
             ]);
 
@@ -267,15 +251,17 @@ class AddressValidator extends AccessesSonar
      */
     private function cleanAddress($data, $withCounty = false)
     {
-        if (!isset($data[7]))
+        $county = trim($data[11]);
+        if (!$county)
         {
-            print_r($data);
+            $county = getenv("DEFAULT_COUNTY");
         }
+
         return  [
             'line1' => trim($data[7]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv("DEFAULT_CITY"),
             'state' => strtoupper(trim($data[10])),
-            'county' => $withCounty === false ? null : trim($data[11]),
+            'county' => $withCounty === false ? null : $county,
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
         ];
