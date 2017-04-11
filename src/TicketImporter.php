@@ -44,7 +44,7 @@ class TicketImporter extends AccessesSonar
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 array_push($validData, $data);
                 $additionalCommentsForThisTicket = [];
-                $i = 9;
+                $i = 10;
                 while (isset($data[$i]))
                 {
                     if (trim($data[$i]) == null)
@@ -218,6 +218,20 @@ class TicketImporter extends AccessesSonar
                     }
                 }
 
+                if (isset($data[9]))
+                {
+                    if ($data[9])
+                    {
+                        try {
+                            $carbon = new Carbon($data[9]);
+                        }
+                        catch (Exception $e)
+                        {
+                            throw new InvalidArgumentException($data[9] . " is not a valid date.");
+                        }
+                    }
+                }
+
                 unset($boom);
                 unset($data);
            }
@@ -255,6 +269,15 @@ class TicketImporter extends AccessesSonar
         {
             $payload['assignee'] = "accounts";
             $payload['assignee_id'] = $line[3];
+        }
+
+        if (isset($line[9]))
+        {
+            if ($line[9])
+            {
+                $carbon = new Carbon(trim($line[10]));
+                $payload['due_date'] = $carbon->toDateString();
+            }
         }
 
         return $payload;
