@@ -4,7 +4,6 @@ log_output/*
 src/.env
 templates/templates.zip
 composer.phar
-vendor/*
 import.php
 validatedAddresses*
 failed_addresses
