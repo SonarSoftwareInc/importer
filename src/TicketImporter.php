@@ -44,7 +44,7 @@ class TicketImporter extends AccessesSonar
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 array_push($validData, $data);
                 $additionalCommentsForThisTicket = [];
-                $i = 10;
+                $i = 9;
                 while (isset($data[$i]))
                 {
                     if (trim($data[$i]) == null)
@@ -202,7 +202,7 @@ class TicketImporter extends AccessesSonar
                     $priority = (int)$data[5];
                     if (!in_array($priority,[1,2,3,4]))
                     {
-                        throw new InvalidArgumentException("{$data[4]} is not a valid date on row $row.");
+                        throw new InvalidArgumentException("{$data[4]} is not a valid priority on row $row.");
                     }
                 }
 
@@ -214,20 +214,6 @@ class TicketImporter extends AccessesSonar
                         if (!is_numeric($bewm))
                         {
                             throw new InvalidArgumentException("{$data[6]} is not a valid list of category IDs on row $row.");
-                        }
-                    }
-                }
-
-                if (isset($data[9]))
-                {
-                    if ($data[9])
-                    {
-                        try {
-                            $carbon = new Carbon($data[9]);
-                        }
-                        catch (Exception $e)
-                        {
-                            throw new InvalidArgumentException($data[9] . " is not a valid date.");
                         }
                     }
                 }
@@ -269,15 +255,6 @@ class TicketImporter extends AccessesSonar
         {
             $payload['assignee'] = "accounts";
             $payload['assignee_id'] = $line[3];
-        }
-
-        if (isset($line[9]))
-        {
-            if ($line[9])
-            {
-                $carbon = new Carbon(trim($line[10]));
-                $payload['due_date'] = $carbon->toDateString();
-            }
         }
 
         return $payload;
