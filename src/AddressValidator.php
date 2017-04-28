@@ -273,7 +273,7 @@ class AddressValidator extends AccessesSonar
      */
     private function validateImportFile($pathToImportFile)
     {
-        $requiredColumns = [ 7,9,10,13 ];
+        $requiredColumns = [ 0,7,9,10,13 ];
 
         if (($fileHandle = fopen($pathToImportFile,"r")) !== FALSE)
         {
