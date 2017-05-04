@@ -183,6 +183,16 @@ class AddressFormatter extends AccessesSonar
             throw new InvalidArgumentException("This address is missing a ZIP.");
         }
 
+        if ($unformattedAddress['latitude'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing the latitude");
+        }
+
+        if ($unformattedAddress['longitude'] == null)
+        {
+            throw new InvalidArgumentException("This address is missing the longitude.");
+        }
+
         return $unformattedAddress;
     }
 }
