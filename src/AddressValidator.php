@@ -246,10 +246,10 @@ class AddressValidator extends AccessesSonar
     /**
      * Either cleans up the address, or throws an exception with a failure message
      * @param $data
-     * @param bool $withCounty
+     * @param bool $withCountyAndLatLong
      * @return mixed
      */
-    private function cleanAddress($data, $withCounty = false)
+    private function cleanAddress($data, $withCountyAndLatLong = false)
     {
         $county = trim($data[11]);
         if (!$county)
@@ -261,9 +261,11 @@ class AddressValidator extends AccessesSonar
             'line1' => trim($data[7]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv("DEFAULT_CITY"),
             'state' => strtoupper(trim($data[10])),
-            'county' => $withCounty === false ? null : $county,
+            'county' => $withCountyAndLatLong === false ? null : $county,
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
+            'latitude' => $withCountyAndLatLong === false ? null : trim($data[14]),
+            'longitude' => $withCountyAndLatLong === false ? null : trim($data[15]),
         ];
     }
 
