@@ -52,3 +52,5 @@ If any addresses are rejected, that means cannot be geocoded. You will have to f
 
 The requirement for addresses in Sonar is a line1 value, a city, a state, a zip/postal code, a country, and a county (if the address is in the US, and the state has counties.) You can get a list of valid counties from the Sonar API at `/api/v1/_data/counties/{state}` where `{state}` is the two character state (e.g. WI, AZ.) If some addresses cannot validate,
 there is no point in running them through the validator repeatedly - fix them by hand, and move on to the account import. Bear in mind that any failures in the address validator will translate into failures in the account importer, so make sure you run through this step first!
+
+**Please note that address validation results are cached for a period of time, so that running the address validator repeatedly is much faster. However, if you make significant changes that require a cache clear, you can do so under the `Tools` menu.**
