@@ -11,7 +11,7 @@ This tool has been built and tested on Linux, specifically Ubuntu, although it i
 The importer itself is written in PHP. Although this importer should work with PHP 5.5+, I recommend using PHP7 for the best performance. If you're using Ubuntu 16.x, you will have PHP7 installed by default.
 
 ### Setup
-Download this tool by clicking [here](https://github.com/SonarSoftware/importer/archive/master.zip). Unzip it, and enter the folder.
+You can install this tool three ways - clone the repository, use [Composer](https://getcomposer.org) and download it via [Packagist](https://packagist.org/packages/sonarsoftware/importer), or click [here](https://github.com/SonarSoftware/importer/archive/master.zip), unzip it, and enter the folder. I recommend using git or Composer to install, so that you can easily keep it up to date.
 
 **The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.**
 
