@@ -114,6 +114,7 @@ class ServiceImporter extends AccessesSonar
             'application' => trim(strtolower($data[2])),
             'amount' => (float)trim($data[3]),
             'data_service' => (bool)trim($data[6]),
+            'billing_frequency_in_months' => 1,
         ];
 
         if (trim($data[4]))
