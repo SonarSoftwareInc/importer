@@ -105,8 +105,15 @@ class AccountImporter extends AccessesSonar
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $allAccounts)
                 {
                     $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    $returnMessage = implode(", ",(array)$body->error->message);
+                    if ($response !== null)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $returnMessage = implode(", ",(array)$body->error->message);
+                    }
+                    else
+                    {
+                        $returnMessage = "Null response back from Sonar instance!",
+                    }
                     $line = $allAccounts[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
