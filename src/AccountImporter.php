@@ -112,7 +112,7 @@ class AccountImporter extends AccessesSonar
                     }
                     else
                     {
-                        $returnMessage = "Null response back from Sonar instance!",
+                        $returnMessage = "Null response back from Sonar instance!";
                     }
                     $line = $allAccounts[$index];
                     array_push($line,$returnMessage);
