@@ -94,16 +94,24 @@ class InventoryImporter extends AccessesSonar
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
                 {
                     $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    $messages = (array)$body->error->message;
-                    if (isset($messages[0]) && is_object($messages[0]))
+                    if ($response)
                     {
-                        $returnMessage = implode(", ",(array)$messages[0]);
+                        $body = json_decode($response->getBody()->getContents());
+                        $messages = (array)$body->error->message;
+                        if (isset($messages[0]) && is_object($messages[0]))
+                        {
+                            $returnMessage = implode(", ",(array)$messages[0]);
+                        }
+                        else
+                        {
+                            $returnMessage = implode(", ",$messages);
+                        }
                     }
                     else
                     {
-                        $returnMessage = implode(", ",$messages);
+                        $returnMessage = "No response returned from Sonar.";
                     }
+
                     $line = $validData[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);

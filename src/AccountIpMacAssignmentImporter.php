@@ -86,8 +86,15 @@ class AccountIpMacAssignmentImporter extends AccessesSonar
                 'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
                 {
                     $response = $reason->getResponse();
-                    $body = json_decode($response->getBody()->getContents());
-                    $returnMessage = implode(", ",(array)$body->error->message);
+                    if ($response)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $returnMessage = implode(", ",(array)$body->error->message);
+                    }
+                    else
+                    {
+                        $returnMessage = "No response returned from Sonar.";
+                    }
                     $line = $validData[$index];
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
