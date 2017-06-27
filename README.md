@@ -16,7 +16,8 @@ You can install this tool three ways - clone the repository, use [Composer](http
 **The importer utilizes Redis for caching, and you will need the Redis server installed. You can install this on Ubuntu by typing `sudo apt-get install redis-server`.**
 
 To setup the importer for use, create a .env file in the `importer` directory by copying the *.env.example* file. Modify the **URI**, **USERNAME** and **PASSWORD** values to match your Sonar instance. The username and password must be for a user account
-that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user.
+that has the appropriate permissions for the API. The safest option is to use a 'Super Admin' user. When running the importer, it will look for an .env file in the current directory, so make sure you're in the same directory as the .env file when running it. This allows for
+the tool to be used by multiple users if necessary.
 
 ## Templates
 The **templates** folder has spreadsheets in it that describe the format of the CSVs that should be used to import data using this tool. Each spreadsheet has a tab with some basic instructions, and a tab for the CSV format. Most columns in the
