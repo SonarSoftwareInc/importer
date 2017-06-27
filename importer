@@ -1,10 +1,11 @@
 <?php
+
+require_once("vendor/autoload.php");
+
 use Dotenv\Dotenv;
 use League\CLImate\CLImate;
 use SonarSoftware\Importer\AddressValidator;
 use SonarSoftware\Importer\Importer;
-
-require_once("vendor/autoload.php");
 
 loadDotenv();
 
