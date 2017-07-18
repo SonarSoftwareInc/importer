@@ -170,7 +170,14 @@ class AccountSecondaryAddressImporter extends AccessesSonar
             'longitude' => trim($data[10]),
         ];
 
-        $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress, false);
+        if ($validateAddress === true)
+        {
+            $formattedAddress = $this->addressFormatter->formatAddress($unformattedAddress, $validateAddress, false);
+        }
+        else
+        {
+            $formattedAddress = $unformattedAddress;
+        }
 
         $formattedAddress['address_type_id'] = (int)trim($data[1]);
 
