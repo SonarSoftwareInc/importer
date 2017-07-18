@@ -286,7 +286,7 @@ function importGeneric(CLImate $climate, $entity)
     catch (Exception $e)
     {
         $climate->red()->out($e->getMessage());
-        importGeneric($climate, $entity);
+        prompt($climate);
         return;
     }
 
