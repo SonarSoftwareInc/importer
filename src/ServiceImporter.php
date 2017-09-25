@@ -241,19 +241,19 @@ class ServiceImporter extends AccessesSonar
                     }
                 }
 
-                if (trim($data[10]))
+                if (trim($data[11]))
                 {
-                    if (!is_numeric($data[10]) || $data[10] < 1)
+                    if (!is_numeric($data[11]) || $data[11] < 1)
                     {
                         throw new InvalidArgumentException($data[10] . " is not a valid general ledger code ID.");
                     }
                 }
 
-                if (trim($data[11]))
+                if (trim($data[12]))
                 {
-                    if (!is_numeric(trim($data[11])) || trim($data[11]) < 0)
+                    if (!is_numeric(trim($data[12])) || trim($data[12]) < 0)
                     {
-                        throw new InvalidArgumentException(trim($data[11]) . " is not a valid tax exemption amount.");
+                        throw new InvalidArgumentException(trim($data[12]) . " is not a valid tax exemption amount.");
                     }
                 }
 
@@ -275,11 +275,11 @@ class ServiceImporter extends AccessesSonar
                         }
                     }
 
-                    if (trim($data[9]))
+                    if (trim($data[10]))
                     {
-                        if (!is_numeric($data[9]) || $data[9] < 1)
+                        if (!is_numeric($data[10]) || $data[10] < 1)
                         {
-                            throw new InvalidArgumentException($data[9] . " is not a valid usage based billing policy ID.");
+                            throw new InvalidArgumentException($data[10] . " is not a valid UBB policy ID.");
                         }
                     }
                 }
