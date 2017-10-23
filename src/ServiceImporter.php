@@ -245,7 +245,7 @@ class ServiceImporter extends AccessesSonar
                 {
                     if (!is_numeric($data[11]) || $data[11] < 1)
                     {
-                        throw new InvalidArgumentException($data[10] . " is not a valid general ledger code ID.");
+                        throw new InvalidArgumentException($data[11] . " is not a valid general ledger code ID.");
                     }
                 }
 
