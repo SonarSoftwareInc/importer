@@ -180,7 +180,7 @@ class TicketImporter extends AccessesSonar
                     }
                 }
 
-                if (!$data[1] && $data[2])
+                if (!$data[1] && !$data[2])
                 {
                     throw new InvalidArgumentException("You must have either a ticket group or user ID on row $row.");
                 }
