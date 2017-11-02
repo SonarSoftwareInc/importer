@@ -162,7 +162,7 @@ class AccountSecondaryAddressImporter extends AccessesSonar
             'line1' => trim($data[2]),
             'line2' => trim($data[3]),
             'city' => trim($data[4]),
-            'state' => strtoupper(trim($data[5])),
+            'state' => strlen(trim($data['5'])) === 2 ? strtoupper(trim($data[5])) : trim($data[5]),
             'county' => trim($data[6]),
             'zip' => trim($data[7]),
             'country' => trim($data[8]),
