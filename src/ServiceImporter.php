@@ -191,7 +191,7 @@ class ServiceImporter extends AccessesSonar
 
                 if (trim($data[1]))
                 {
-                    if (!in_array(trim($data[1]),['one time','recurring','expiring']))
+                    if (!in_array(trim($data[1]),['one time','recurring','expiring', 'one time', 'adjustment']))
                     {
                         throw new InvalidArgumentException(trim($data[1]) . " is not a valid service type.");
                     }
