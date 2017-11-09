@@ -129,6 +129,7 @@ function prompt(CLImate $climate, $innerOption = null)
         case "financial":
             $options = [
                 'services' => 'Import Services',
+                'packages' => 'Import Packages',
             ];
             $color = 'yellow';
             break;
@@ -184,6 +185,7 @@ function runInnerResponse(CLImate $climate, $response)
         case "tickets":
         case "networkSiteIps":
         case "accountDids":
+        case "packages":
             importGeneric($climate,$response);
             break;
         case "updateBalances":
