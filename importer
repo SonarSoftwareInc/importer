@@ -89,6 +89,7 @@ function prompt(CLImate $climate, $innerOption = null)
                 'tokenizedCreditCards' => 'Import Tokenized Credit Cards',
                 'untokenizedCreditCards' => 'Import Untokenized Credit Cards',
                 'updateBalances' => 'Update Balances',
+                'updateNextBillDate' => 'Update Next Bill Date',
             ];
             $color = 'lightBlue';
             break;
@@ -186,6 +187,7 @@ function runInnerResponse(CLImate $climate, $response)
         case "networkSiteIps":
         case "accountDids":
         case "packages":
+        case "updateNextBillDate":
             importGeneric($climate,$response);
             break;
         case "updateBalances":

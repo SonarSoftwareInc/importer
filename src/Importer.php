@@ -279,6 +279,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile - Path to the account next bill date CSV
+     * @return array
+     */
+    public function updateNextBillDate($pathToImportFile)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.2.0");
+
+        $importer = new AccountNextBillDateImporter();
+        return $importer->import($pathToImportFile);
+    }
+
+    /**
      * @param $pathToImportFile - Input the full path to the accounts CSV file.
      * @param int $debitAdjustmentID - An ID for an unlimited debit adjustment service
      * @param int $creditAdjustmentID - An ID for an unlimited credit adjustment service
