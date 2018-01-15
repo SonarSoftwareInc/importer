@@ -166,7 +166,6 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
     {
         //First, we get the models and figure out which fields are MACs
         $macFieldIDs = $this->getMacFieldIDs();
-
         $response = $this->client->get($this->uri . "/api/v1/inventory/items?limit=100&page=1", [
             'headers' => [
                 'Content-Type' => 'application/json; charset=UTF8',
@@ -250,9 +249,37 @@ class NetworkIPMacAssignmentImporter extends AccessesSonar
         $currentPage = $body->paginator->current_page;
         $totalPages = $body->paginator->total_pages;
 
+        $modelIDs = [];
+
         foreach ($body->data as $datum)
         {
-            $modelID = $datum->id;
+            $modelIDs[] = $datum->id;
+        }
+
+        while ($currentPage < $totalPages)
+        {
+            $response = $this->client->get($this->uri . "/api/v1/inventory/models?limit=100&page=" . ($currentPage+1), [
+                'headers' => [
+                    'Content-Type' => 'application/json; charset=UTF8',
+                    'timeout' => 30,
+                ],
+                'auth' => [
+                    $this->username,
+                    $this->password,
+                ],
+            ]);
+
+            $body = json_decode($response->getBody());
+            $currentPage = $body->paginator->current_page;
+            $totalPages = $body->paginator->total_pages;
+            foreach ($body->data as $datum)
+            {
+                $modelIDs[] = $datum->id;
+            }
+        }
+
+        foreach ($modelIDs as $modelID)
+        {
             //If there are more than 100 fields, we could have problems here, but very unlikely to be the case..
             $fieldResponse = $this->client->get($this->uri . "/api/v1/inventory/models/$modelID/fields?limit=100&page=1", [
                 'headers' => [
