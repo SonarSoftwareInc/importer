@@ -136,10 +136,6 @@ class AccountNextBillDateImporter extends AccessesSonar
                     }
                 }
 
-                if (!is_numeric($data[0]) == '') {
-                    throw new InvalidArgumentException("In the account next bill date update, column number " . ($colNumber + 1) . " must be an integer on $row.");
-                }
-
                 try {
                     $carbon = new Carbon($data[1]);
                 }

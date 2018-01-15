@@ -282,7 +282,7 @@ class Importer extends AccessesSonar
      * @param $pathToImportFile - Path to the account next bill date CSV
      * @return array
      */
-    public function updateNextBillDate($pathToImportFile)
+    public function importUpdateNextBillDate($pathToImportFile)
     {
         set_time_limit(0);
         $this->validateCredentials();
