@@ -230,6 +230,11 @@ class AccountServiceImporter extends AccessesSonar
             $payload['price_override_reason'] = trim($data[3]) ? trim($data[3]) : 'Unknown';
         }
 
+        if (is_numeric($data[4]) && $data[4] > 0)
+        {
+            $payload['quantity'] = (int)$data[4];
+        }
+
         return $payload;
     }
 
