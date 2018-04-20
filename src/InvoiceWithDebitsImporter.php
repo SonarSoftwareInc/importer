@@ -138,7 +138,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                                 'timeout' => 30,
                                 'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
                             ]
-                            , json_encode($requestBody);
+                            , json_encode($requestBody));
                     }
                 };
 
