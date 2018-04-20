@@ -421,6 +421,20 @@ class Importer extends AccessesSonar
     }
 
     /**
+     * @param $pathToImportFile
+     * @return array
+     */
+    public function generateInvoicesWithDebits($pathToImportFile, $debitAdjustmentServiceID)
+    {
+        set_time_limit(0);
+        $this->validateCredentials();
+        $this->validateVersion("0.6.11");
+
+        $importer = new InvoiceWithDebitsImporter();
+        return $importer->import($pathToImportFile, $debitAdjustmentServiceID);
+    }
+
+    /**
      * Validate that the version of the remote Sonar instance is valid.
      * @param $requiredVersion
      * @return bool

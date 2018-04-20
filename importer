@@ -90,6 +90,7 @@ function prompt(CLImate $climate, $innerOption = null)
                 'untokenizedCreditCards' => 'Import Untokenized Credit Cards',
                 'updateBalances' => 'Update Balances',
                 'updateNextBillDate' => 'Update Next Bill Date',
+                'generateInvoicesWithDebits' => 'Generate Invoices with Debits',
             ];
             $color = 'lightBlue';
             break;
@@ -193,6 +194,9 @@ function runInnerResponse(CLImate $climate, $response)
         case "updateBalances":
             updateBalances($climate);
             break;
+        case "generateInvoicesWithDebits":
+            generateInvoicesWithDebits($climate);
+            break;
         case "flush":
             flushAddressCache($climate);
             break;
@@ -206,6 +210,51 @@ function runInnerResponse(CLImate $climate, $response)
     }
 }
 
+/**
+ * @param CLImate $climate
+ */
+function generateInvoicesWithDebits(CLImate $climate)
+{
+    $climate->lightGray()->out("OK, running the generate invoices with debits tool!");
+    $input = $climate->lightGreen()->input("Please enter the complete path to the invoices with debits file:");
+    $filename = $input->prompt();
+    if (!file_exists($filename))
+    {
+        $climate->red()->out($filename . " is not a valid file!");
+        generateInvoicesWithDebits($climate);
+    }
+
+    $input = $input = $climate->lightGreen()->input("Please enter the ID of a DEBIT adjustment service to use:");
+    $debitAdjustmentID = $input->prompt();
+    if (!is_numeric($debitAdjustmentID))
+    {
+        $climate->red()->out("The debit adjustment ID must be numeric!");
+        generateInvoicesWithDebits($climate);
+    }
+
+    $lines = getLines($filename);
+    $climate->lightGreen()->out("Generating $lines invoices. Please be patient, this may take some time.");
+
+    $importer = new Importer();
+    try {
+        $output = $importer->generateInvoicesWithDebits($filename, $debitAdjustmentID);
+    }
+    catch (Exception $e)
+    {
+        $climate->red()->out($e->getMessage());
+        generateInvoicesWithDebits($climate);
+        return;
+    }
+
+    $climate->lightGreen()->out("Invoice generation complete!");
+    $climate->white()->out("There were {$output['successes']} invoices successfully generated.");
+    if ($output['failures'] > 0)
+    {
+        $climate->red()->out("There were {$output['failures']} failures, logged at {$output['failure_log_name']}.");
+    }
+
+    prompt($climate);
+}
 /**
  * @param CLImate $climate
  */
