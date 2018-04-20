@@ -42,15 +42,10 @@ class InvoiceWithDebitsImporter extends AccessesSonar
             $validData = [];
 
             while (($data = fgetcsv($handle, 8096, ",")) !== FALSE) {
-                $payload = $this->buildInitialPayload($data, $debitAdjustmentServiceID);
-                if (count($payload) === 0) {
-                    continue;
-                }
-
                 array_push($validData, $data);
             }
 
-            $requests = function () use ($validData)
+            $requests = function () use ($validData, $debitAdjustmentServiceID)
             {
                 foreach ($validData as $validDatum)
                 {
@@ -59,7 +54,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                             'timeout' => 30,
                             'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
                         ]
-                        , json_encode($validDatum));
+                        , json_encode($this->buildInitialPayload($validDatum, $debitAdjustmentServiceID)));
                 }
             };
 
@@ -67,13 +62,14 @@ class InvoiceWithDebitsImporter extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $invoiceGenerationRequests)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, &$invoiceGenerationRequests)
                 {
                     $statusCode = $response->getStatusCode();
                     if ($statusCode > 201)
                     {
                         $body = json_decode($response->getBody()->getContents());
                         $line = $validData[$index];
+                        $body .= " (when adding debit)";
                         array_push($line,$body);
                         fputcsv($failureLog,$line);
                         $returnData['failures'] += 1;
@@ -81,7 +77,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                     else
                     {
                         $line = $validData[$index];
-                        $invoiceGenerationRequests[$line['account_id']] = true;
+                        $invoiceGenerationRequests[$line[0]] = true;
                         $returnData['successes'] += 1;
                         fwrite($successLog,"Import succeeded for account ID {$validData[$index][0]}" . "\n");
                     }
@@ -99,6 +95,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                         $returnMessage = "No response returned from Sonar.";
                     }
                     $line = $validData[$index];
+                    $returnMessage .= " (when adding debit)";
                     array_push($line,$returnMessage);
                     fputcsv($failureLog,$line);
                     $returnData['failures'] += 1;
@@ -118,7 +115,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
             if (isset($invoiceGenerationRequests[$validDatum[0]]))
             {
                 //Bundle the created debit up into an invoice
-                $requests = function () use ($validData, $debitAdjustmentServiceID, $returnData, $failureLog)
+                $requests2 = function () use ($validData, $debitAdjustmentServiceID, $returnData, $failureLog)
                 {
                     foreach ($validData as $validDatum)
                     {
@@ -128,7 +125,7 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                         catch (Exception $e)
                         {
                             array_push($validData,$e->getMessage());
-                            fputcsv($failureLog,$validData);
+                            fputcsv($failureLog,$validDatum);
                             $returnData['failures'] += 1;
                             continue;
                         }
@@ -141,51 +138,59 @@ class InvoiceWithDebitsImporter extends AccessesSonar
                             , json_encode($requestBody));
                     }
                 };
-
-                $pool = new Pool($this->client, $requests(), [
-                    'concurrency' => 10,
-                    'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $invoiceGenerationRequests)
-                    {
-                        $statusCode = $response->getStatusCode();
-                        if ($statusCode > 201)
-                        {
-                            $body = json_decode($response->getBody()->getContents());
-                            $line = $validData[$index];
-                            array_push($line,$body);
-                            fputcsv($failureLog,$line);
-                            $returnData['failures'] += 1;
-                        }
-                        else
-                        {
-                            $line = $validData[$index];
-                            $invoiceGenerationRequests[$line['account_id']] = true;
-                            $returnData['successes'] += 1;
-                            fwrite($successLog,"Invoice generation succeeded for account ID {$validData[$index][0]}" . "\n");
-                        }
-                    },
-                    'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
-                    {
-                        $response = $reason->getResponse();
-                        if ($response)
-                        {
-                            $body = json_decode($response->getBody()->getContents());
-                            $returnMessage = implode(", ",(array)$body->error->message);
-                        }
-                        else
-                        {
-                            $returnMessage = "No response returned from Sonar.";
-                        }
-                        $line = $validData[$index];
-                        array_push($line,$returnMessage);
-                        fputcsv($failureLog,$line);
-                        $returnData['failures'] += 1;
-                    }
-                ]);
-
-                $promise = $pool->promise();
-                $promise->wait();
+            }
+            else
+            {
+                array_push($validDatum,"No debit was created for this account.");
+                fputcsv($failureLog,$validDatum);
+                $returnData['failures'] += 1;
             }
         }
+
+        $pool = new Pool($this->client, $requests2(), [
+            'concurrency' => 10,
+            'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, $invoiceGenerationRequests)
+            {
+                $statusCode = $response->getStatusCode();
+                if ($statusCode > 201)
+                {
+                    $body = json_decode($response->getBody()->getContents());
+                    $line = $validData[$index];
+                    $body .= " (when creating invoice)";
+                    array_push($line,$body);
+                    fputcsv($failureLog,$line);
+                    $returnData['failures'] += 1;
+                }
+                else
+                {
+                    $line = $validData[$index];
+                    $invoiceGenerationRequests[$line[0]] = true;
+                    $returnData['successes'] += 1;
+                    fwrite($successLog,"Invoice generation succeeded for account ID {$validData[$index][0]}" . "\n");
+                }
+            },
+            'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+            {
+                $response = $reason->getResponse();
+                if ($response)
+                {
+                    $body = json_decode($response->getBody()->getContents());
+                    $returnMessage = implode(", ",(array)$body->error->message);
+                }
+                else
+                {
+                    $returnMessage = "No response returned from Sonar.";
+                }
+                $line = $validData[$index];
+                $returnMessage .= " (when creating invoice)";
+                array_push($line,$returnMessage);
+                fputcsv($failureLog,$line);
+                $returnData['failures'] += 1;
+            }
+        ]);
+
+        $promise = $pool->promise();
+        $promise->wait();
 
         fclose($failureLog);
         fclose($successLog);
@@ -201,14 +206,19 @@ class InvoiceWithDebitsImporter extends AccessesSonar
         $client = new Client();
         try {
             $response = $client->get($this->uri . "/api/v1/system/services/$debitAdjustmentID", [
-                'Content-Type' => 'application/json; charset=UTF8',
-                'timeout' => 30,
-                'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+                'headers' => [
+                    'Content-Type' => 'application/json; charset=UTF8',
+                    'timeout' => 30,
+                ],
+                'auth' => [
+                    $this->username,
+                    $this->password,
+                ]
             ]);
         }
         catch (Exception $e)
         {
-            throw new InvalidArgumentException($debitAdjustmentID . " is not a valid debit adjustment service.");
+            throw new InvalidArgumentException($debitAdjustmentID . " is not a valid debit adjustment service ({$e->getMessage()})");
         }
 
         $json = json_decode($response->getBody()->getContents());
@@ -278,13 +288,18 @@ class InvoiceWithDebitsImporter extends AccessesSonar
         $debitID = null;
         $client = new Client();
         $response = $client->get($this->uri . "/api/v1/accounts/" . $validDatum[0] . "/transactions/debits",[
-            'Content-Type' => 'application/json; charset=UTF8',
-            'timeout' => 30,
-            'Authorization' => 'Basic ' . base64_encode($this->username . ':' . $this->password),
+            'headers' => [
+                'Content-Type' => 'application/json; charset=UTF8',
+                'timeout' => 30,
+            ],
+            'auth' => [
+                $this->username,
+                $this->password,
+            ]
         ]);
 
         $debits = json_decode($response->getBody()->getContents());
-        foreach ($debits as $debit)
+        foreach ($debits->data as $debit)
         {
             if ($debit->amount == $validDatum[1] && $debit->service_id == $adjustmentServiceID)
             {
