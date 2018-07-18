@@ -196,7 +196,7 @@ class AccountImporter extends AccessesSonar
             'line1' => trim($data[7]),
             'line2' => trim($data[8]),
             'city' => trim($data[9]) ? trim($data[9]) : getenv('DEFAULT_CITY'),
-            'state' => strlen(trim($data[10])) === 2 ? strtoupper(trim($data[10])) : ucwords(trim($data[10])),
+            'state' => strlen(trim($data[10])) === 2 ? strtoupper(trim($data[10])) : trim($data[10]),
             'county' => trim($data[11]) ? trim($data[11]) : getenv('DEFAULT_COUNTY'),
             'zip' => trim($data[12]),
             'country' => trim($data[13]),
