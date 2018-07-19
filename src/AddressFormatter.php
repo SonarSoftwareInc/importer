@@ -123,7 +123,7 @@ class AddressFormatter extends AccessesSonar
             $this->subDivisions[$unformattedAddress['country']] = array_map(function($value) { return strtolower($value); }, (array)$subDivisionObject->data);
         }
 
-        if (!in_array(trim(strtolower($unformattedAddress['state'])),$this->subDivisions[$unformattedAddress['country']]))
+        if (!in_array(trim(strtolower($unformattedAddress['state'])),$this->subDivisions[$unformattedAddress['country']]) && !isset($this->subDivisions[$unformattedAddress['country']]))
         {
             throw new InvalidArgumentException($unformattedAddress['state'] . " is not a valid subdivision for " . $unformattedAddress['country']);
         }
