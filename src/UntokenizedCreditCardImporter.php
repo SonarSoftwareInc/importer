@@ -154,6 +154,7 @@ class UntokenizedCreditCardImporter extends AccessesSonar
             'state' => trim($data[8]),
             'zip' => trim($data[9]),
             'country' => trim($data[10]),
+            'cvc' => isset($data[11]) ? trim($data[11]) : null,
         ];
     }
 
