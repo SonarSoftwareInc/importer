@@ -10,10 +10,10 @@ use SonarSoftware\Importer\Importer;
 loadDotenv();
 
 $climate = new CLImate();
-$input = $climate->red()->bold()->input("This will import data into " . getenv('URI') . ", please confirm to proceed.");
-$input->accept(['y','n'],true);
-if ($input->prompt() != 'y') {
-    $climate->lightGreen()->out("Goodbye.");
+$input = $climate->red()->bold()->input("This will import data into " . getenv('URI') . ", please retype the full URL to the instance to proceed.");
+$result = $input->prompt();
+if ($result != trim(getenv('URI'))) {
+    $climate->lightGreen()->out("You did not type " . getenv('URI') . ", you typed {$result} - exiting.");
     return;
 }
 
