@@ -235,6 +235,18 @@ class AccountServiceImporter extends AccessesSonar
             $payload['quantity'] = (int)$data[4];
         }
 
+        if (isset($data[5]) && $data[5] != '')
+        {
+            try {
+                $carbon = new Carbon($data[5]);
+                $payload['next_bill_date'] = $carbon->toDateString();
+            }
+            catch (Exception $e)
+            {
+                //
+            }
+        }
+
         return $payload;
     }
 
