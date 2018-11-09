@@ -2,6 +2,7 @@
 
 namespace SonarSoftware\Importer;
 
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
