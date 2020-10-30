@@ -1,4 +1,4 @@
-# Sonar Importer
+# Sonar v1 Importer
 This PHP library uses the Sonar API to import data from a standard format into Sonar.
 
 ### This tool is fairly technical. If you don't feel comfortable using this tool yourself, please contact onboarding@sonar.software for assistance.
