@@ -137,13 +137,35 @@ class TicketImporter extends AccessesSonar
 
             $pool = new Pool($this->client, $requests(), [
                 'concurrency' => 10,
-                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog, $validData, &$ticketIDs)
+                'fulfilled' => function ($response, $index) use (&$returnData, $successLog, $failureLog)
                 {
-                    //Just do nothing here, too late to deal with any failures.
+                    $statusCode = $response->getStatusCode();
+                    $body = json_decode($response->getBody()->getContents());
+
+                    if ($statusCode > 201)
+                    {
+                        fputcsv($failureLog,['Ticket comment import failed', $body]);
+                        $returnData['failures'] += 1;
+                    }
+                    else
+                    {
+                        //Successes don't really matter at this point
+                    }
                 },
-                'rejected' => function($reason, $index) use (&$returnData, $failureLog, $validData)
+                'rejected' => function($reason, $index) use (&$returnData, $failureLog)
                 {
-                    //Just do nothing here, too late to deal with any failures.
+                    $response = $reason->getResponse();
+                    if ($response)
+                    {
+                        $body = json_decode($response->getBody()->getContents());
+                        $returnMessage = implode(", ",(array)$body->error->message);
+                    }
+                    else
+                    {
+                        $returnMessage = "No response returned from Sonar.";
+                    }
+                    fputcsv($failureLog,['Ticket comment import failed', $returnMessage]);
+                    $returnData['failures'] += 1;
                 }
             ]);
 
